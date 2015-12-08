@@ -1,0 +1,2 @@
+include ':app', ':MapsWithMeApi'
+project(':MapsWithMeApi').projectDir = new File('libs/MapsWithMeApi')
