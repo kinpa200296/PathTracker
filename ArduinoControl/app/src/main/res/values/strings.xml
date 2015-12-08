@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Arduino Control</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="btOn">BlueTooth On</string>
+    <string name="btOff">BlueTooth Off</string>
+    <string name="btnConnect">Connect</string>
+    <string name="deviceName">HC-05</string>
+    <string name="action_refresh">Refresh</string>
+</resources>
