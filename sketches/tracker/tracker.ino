@@ -1,7 +1,8 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <SD.h>
-#include "tr.h"
+
+#include <PathTracker.h>
 
 // int bluetoothRX = 0;
 // int bluetoothTX = 1;
@@ -16,9 +17,9 @@ int sdCSPin = 10;
 
 bool sentenceReady = false;
 bool sdCardPresent = false;
-char sentence[150];
-byte sentenceSize = 0;
 File dataFile;
+
+GpsParser parser(100);
 
 unsigned long prevWriteTime;
 // unsigned long writeDelay = WRITE_DELAY;
@@ -33,7 +34,9 @@ void setup() {
   sdCardPresent = SD.begin(sdCSPin);
   if (sdCardPresent){
     Serial.println("card present");
-    SD.remove("log.dat");
+    if (SD.exists("log.dat")){
+      SD.remove("log.dat");
+    }
     dataFile = SD.open("log.dat", FILE_WRITE);
     prevWriteTime = millis();
     // bluetoothSerial.println("card present");
@@ -51,58 +54,37 @@ void loop() {
   }
   else{
     if (prevWriteTime + WRITE_DELAY < millis()){
-      Serial.println(millis(), DEC);
+      // Serial.println(millis(), DEC);
       dataFile.flush();
       prevWriteTime += 10*WRITE_DELAY;
-      Serial.println(millis(), DEC);
+      // Serial.println(millis(), DEC);
     }
   }
-  if (sentenceReady){
+  if (parser.isReady()){
     processSentence();
   }
 }
 
 void processSentence(){
-  Serial.write(sentence, sentenceSize);
+  DataString *data = parser.getBufferedData();
+  Serial.write(data->getData(), data->length());
   // bluetoothSerial.println(sentence);
   
   // File dataFile = SD.open("log.dat", FILE_WRITE);
   if (dataFile && sdCardPresent){
-    dataFile.write(sentence, sentenceSize);
+    dataFile.write(data->getData(), data->length());
     prevWriteTime = millis();
     // dataFile.close();
   }
   
-  sentenceSize  = 0;
-  sentence[sentenceSize] = 0;
-  sentenceReady = false;
+  parser.reset();
 }
 
 void checkGpsSerial(){  
   while (gpsSerial.available() > 0){
     char ch = (char)gpsSerial.read();
-    sentence[sentenceSize] = ch;
-    sentenceSize++;
-    sentence[sentenceSize] = 0;
-    if (ch == '\n'){
-      if (str_check(sentence,"$GPRMC")){
-        sentenceReady = true;
-      }
-      else{
-        sentenceSize  = 0;
-        sentence[sentenceSize] = 0;
-      }
-    }
+    parser.add(ch);
   }
-}
-
-bool str_check(char *input, char *pattern){
-  for (; *pattern; pattern++, input++){
-    if (*input != *pattern){
-      return false;
-    }
-  }
-  return true;
 }
 
 
