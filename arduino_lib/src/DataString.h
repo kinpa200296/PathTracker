@@ -1,7 +1,7 @@
 #ifndef DataString_h
 #define DataString_h
 
-#include "stdlib.h"
+#include "Common.h"
 
 class DataString{
 private:
@@ -18,6 +18,7 @@ public:
     void append(char ch);
     bool equals(const char *other);
     const char* getData();
+    char **split(char separator);
 };
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef GpsReader_h
 #define GpsReader_h
 
+#include "Common.h"
 #include "DataString.h"
 
 #define TARGET_PREFIX "$GPRMC,"

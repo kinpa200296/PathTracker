@@ -1,7 +1,7 @@
 #ifndef PathTracker_h
 #define PathTracker_h
 
-#include "Arduino.h"
+#include "Common.h"
 
 #include "GpsParser.h"
 

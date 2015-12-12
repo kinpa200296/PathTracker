@@ -45,3 +45,23 @@ bool DataString::equals(const char *other) {
 const char* DataString::getData() {
     return _data;
 }
+
+char** DataString::split(char separator) {
+    int cnt = 0;
+    for (char *ch = _data; *ch; ch++){
+        if (*ch == separator){
+            cnt++;
+        }
+    }
+    char **res = (char**)malloc(cnt* sizeof(char*));
+    cnt = 0;
+    res[cnt] = _data;
+    for (char *ch = _data; *ch; ch++){
+        if (*ch == separator){
+            cnt++;
+            *ch = 0;
+            res[cnt] = ch + 1;
+        }
+    }
+    return res;
+}
