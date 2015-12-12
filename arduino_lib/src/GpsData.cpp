@@ -10,6 +10,8 @@ GpsData::GpsData(bool active, long time, long date, byte lat_deg, float lat_min,
     _longitude_minutes = long_min;
 }
 
+GpsData::~GpsData() { }
+
 byte GpsData::get_latitude_degrees() {
     return _latitude_degrees;
 }

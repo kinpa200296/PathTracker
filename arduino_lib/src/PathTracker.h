@@ -4,6 +4,7 @@
 #include "Common.h"
 
 #include "GpsParser.h"
+#include "DataParser.h"
 
 #define WRITE_DELAY (unsigned long)500
 

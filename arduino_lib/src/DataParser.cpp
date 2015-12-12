@@ -9,9 +9,9 @@ DataParser::~DataParser() {
 }
 
 GpsData* DataParser::getData() {
-    byte lat_deg, long_deg;
-    float lat_min, long_min;
-    long date, time;
+    byte lat_deg = 0, long_deg = 0;
+    float lat_min = 0.0, long_min = 0.0;
+    long date = 0, time = 0;
     bool active;
 
     if (_strings[1][0] == 'A'){
@@ -32,7 +32,7 @@ GpsData* DataParser::getData() {
 
     if (strlen(_strings[2]) != 0){
         lat_deg = _parse_byte(_strings[2], 2);
-        lat_min = _parse_float(_strings[2] + 3);
+        lat_min = _parse_float(_strings[2] + 2);
     }
 
     if (strlen(_strings[4]) != 0){
@@ -57,19 +57,22 @@ GpsData* DataParser::getData() {
 
 long DataParser::_parse_long(const char *str) {
     long res = 0;
+    long tmp = 1;
     for (int i = strlen(str); i > 0; i--){
-        res *= 10;
-        res += str[i - 1] - 48;
+        res += (str[i - 1] - 48) * tmp;
+        tmp *= 10;
     }
     return res;
 }
 
 byte DataParser::_parse_byte(const char *str, int cnt) {
     byte res = 0;
+    byte tmp = 1;
     for (; cnt > 0; cnt--){
-        res *= 10;
-        res += str[cnt - 1] - 48;
+        res += (str[cnt - 1] - 48) * tmp;
+        tmp *= 10;
     }
+    return res;
 }
 
 float DataParser::_parse_float(const char *str) {
@@ -78,7 +81,7 @@ float DataParser::_parse_float(const char *str) {
     res += 10.0 * (str[0] - 48) + str[1] - 48;
     for (int i = 3; str[i]; i++){
         tmp /= 10.0;
-        res += tmp * (str[i] - 48);
+        res += (str[i] - 48) * tmp;
     }
     return res;
 }

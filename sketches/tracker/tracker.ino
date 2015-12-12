@@ -4,8 +4,6 @@
 
 #include <PathTracker.h>
 
-// int bluetoothRX = 0;
-// int bluetoothTX = 1;
 int gpsRX = 2;
 int gpsTX = 3;
 
@@ -15,22 +13,18 @@ int sdCSPin = 10;
 // MISO - pin 12
 // SCK - pin 13
 
-bool sentenceReady = false;
 bool sdCardPresent = false;
 File dataFile;
 
 GpsParser parser(100);
 
 unsigned long prevWriteTime;
-// unsigned long writeDelay = WRITE_DELAY;
 
-// SoftwareSerial bluetoothSerial(bluetoothRX, bluetoothTX);
 SoftwareSerial gpsSerial(gpsRX, gpsTX);
 
 void setup() {
   Serial.begin(9600);
   gpsSerial.begin(9600);
-  // bluetoothSerial.begin(9600);
   sdCardPresent = SD.begin(sdCSPin);
   if (sdCardPresent){
     Serial.println("card present");
@@ -39,11 +33,9 @@ void setup() {
     }
     dataFile = SD.open("log.dat", FILE_WRITE);
     prevWriteTime = millis();
-    // bluetoothSerial.println("card present");
   }
   else{
     Serial.println("card not present");
-    // bluetoothSerial.println("card not present");
   }
 }
 
@@ -53,30 +45,58 @@ void loop() {
     checkGpsSerial();
   }
   else{
-    if (prevWriteTime + WRITE_DELAY < millis()){
-      // Serial.println(millis(), DEC);
+    if (parser.isReady()){
+      processSentence();
+    }
+    if (sdCardPresent && prevWriteTime + WRITE_DELAY < millis()){
       dataFile.flush();
       prevWriteTime += 10*WRITE_DELAY;
-      // Serial.println(millis(), DEC);
     }
-  }
-  if (parser.isReady()){
-    processSentence();
   }
 }
 
 void processSentence(){
-  DataString *data = parser.getBufferedData();
-  Serial.write(data->getData(), data->length());
-  // bluetoothSerial.println(sentence);
+  DataParser *dataParser = new DataParser(parser.getBufferedData());
+  GpsData *data = dataParser->getData();
+  delete dataParser;
   
-  // File dataFile = SD.open("log.dat", FILE_WRITE);
-  if (dataFile && sdCardPresent){
-    dataFile.write(data->getData(), data->length());
-    prevWriteTime = millis();
-    // dataFile.close();
+  if (data->isActive()){
+    // Serial.write(parser.getBufferedData()->getData(), parser.getBufferedData()->length());
+    Serial.println("Active");
+    Serial.print("latitude: ");
+    Serial.print(data->get_latitude_degrees());
+    Serial.print(" deg ");
+    Serial.print(data->get_latitude_minutes(), 5);
+    Serial.println(" min");
+    Serial.print("longitude: ");
+    Serial.print(data->get_longitude_degrees());
+    Serial.print(" deg ");
+    Serial.print(data->get_longitude_minutes(), 5);
+    Serial.println(" min");
+    Serial.print("time: ");
+    Serial.print(data->get_time());
+    Serial.print("; date: ");
+    Serial.println(data->get_date());
+  }
+  else{
+    // Serial.write(parser.getBufferedData()->getData(), parser.getBufferedData()->length());
+    Serial.println("Void");
+    if (data->get_time() != 0){
+      Serial.print("time: ");
+      Serial.print(data->get_time());
+    }
+    if (data->get_date() != 0){
+      Serial.print("; date: ");
+      Serial.println(data->get_date());
+    }
   }
   
+  if (dataFile && sdCardPresent){
+    //dataFile.write(data->getData(), data->length());
+    prevWriteTime = millis();
+  }
+  
+  delete data;
   parser.reset();
 }
 
