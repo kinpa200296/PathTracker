@@ -64,30 +64,30 @@ void processSentence(){
     // Serial.write(parser.getBufferedData()->getData(), parser.getBufferedData()->length());
     Serial.println("Active");
     Serial.print("latitude: ");
-    Serial.print(data->get_latitude_degrees());
+    Serial.print(data->getLatitudeDegrees());
     Serial.print(" deg ");
-    Serial.print(data->get_latitude_minutes(), 5);
+    Serial.print(data->getLatitudeMinutes(), 5);
     Serial.println(" min");
     Serial.print("longitude: ");
-    Serial.print(data->get_longitude_degrees());
+    Serial.print(data->getLongitudeDegrees());
     Serial.print(" deg ");
-    Serial.print(data->get_longitude_minutes(), 5);
+    Serial.print(data->getLongitudeMinutes(), 5);
     Serial.println(" min");
     Serial.print("time: ");
-    Serial.print(data->get_time());
+    Serial.print(data->getTime());
     Serial.print("; date: ");
-    Serial.println(data->get_date());
+    Serial.println(data->getDate());
   }
   else{
     // Serial.write(parser.getBufferedData()->getData(), parser.getBufferedData()->length());
     Serial.println("Void");
-    if (data->get_time() != 0){
+    if (data->getTime() != 0){
       Serial.print("time: ");
-      Serial.print(data->get_time());
+      Serial.print(data->getTime());
     }
-    if (data->get_date() != 0){
+    if (data->getDate() != 0){
       Serial.print("; date: ");
-      Serial.println(data->get_date());
+      Serial.println(data->getDate());
     }
   }
   

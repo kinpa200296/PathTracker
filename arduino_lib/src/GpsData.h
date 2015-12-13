@@ -3,28 +3,40 @@
 
 #include "Common.h"
 
+#define GPS_DATA_SIZE 18
+#define GPS_DATA_POS_LAT_DEG 0
+#define GPS_DATA_POS_LAT_MIN 1
+#define GPS_DATA_POS_LONG_DEG 5
+#define GPS_DATA_POS_LONG_MIN 6
+#define GPS_DATA_POS_TIME 10
+#define GPS_DATA_POS_DATE 14
+
 class GpsData{
 private:
-    byte _latitude_degrees;
-    float _latitude_minutes;
-    byte _longitude_degrees;
-    float _longitude_minutes;
+    byte _latitudeDegrees;
+    float _latitudeMinutes;
+    byte _longitudeDegrees;
+    float _longitudeMinutes;
     long _date;
     long _time;
     bool _active;
 
+    GpsData();
+
 public:
-    GpsData(bool active, long time, long date, byte lat_deg, float lat_min, byte long_deg, float long_min);
+    GpsData(bool active, long time, long date, byte latDeg, float latMin, byte longDeg, float longMin);
     ~GpsData();
 
-    byte get_latitude_degrees();
-    float get_latitude_minutes();
-    byte get_longitude_degrees();
-    float get_longitude_minutes();
-    long get_date();
-    long get_time();
+    byte getLatitudeDegrees();
+    float getLatitudeMinutes();
+    byte getLongitudeDegrees();
+    float getLongitudeMinutes();
+    long getDate();
+    long getTime();
     bool isActive();
 
+    byte* toBytes();
+    static GpsData* fromBytes(byte* data);
 };
 
 #endif

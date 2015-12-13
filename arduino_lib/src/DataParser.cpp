@@ -9,8 +9,8 @@ DataParser::~DataParser() {
 }
 
 GpsData* DataParser::getData() {
-    byte lat_deg = 0, long_deg = 0;
-    float lat_min = 0.0, long_min = 0.0;
+    byte latDeg = 0, longDeg = 0;
+    float latMin = 0.0, longMin = 0.0;
     long date = 0, time = 0;
     bool active;
 
@@ -23,39 +23,39 @@ GpsData* DataParser::getData() {
 
     if (strlen(_strings[0]) != 0){
         _strings[0][6] = 0;
-        time = _parse_long(_strings[0]);
+        time = _parseLong(_strings[0]);
     }
 
     if (strlen(_strings[8]) != 0){
-        date = _parse_long(_strings[8]);
+        date = _parseLong(_strings[8]);
     }
 
     if (strlen(_strings[2]) != 0){
-        lat_deg = _parse_byte(_strings[2], 2);
-        lat_min = _parse_float(_strings[2] + 2);
+        latDeg = _parseByte(_strings[2], 2);
+        latMin = _parseFloat(_strings[2] + 2);
     }
 
     if (strlen(_strings[4]) != 0){
-        long_deg = _parse_byte(_strings[4], 3);
-        long_min = _parse_float(_strings[4] + 3);
+        longDeg = _parseByte(_strings[4], 3);
+        longMin = _parseFloat(_strings[4] + 3);
     }
 
     if (strlen(_strings[3]) != 0){
         if (_strings[3][0] != 'N'){
-            lat_deg = -lat_deg;
+            latDeg = -latDeg;
         }
     }
 
     if (strlen(_strings[5]) != 0){
         if (_strings[5][0] != 'E'){
-            long_deg = -long_deg;
+            longDeg = -longDeg;
         }
     }
 
-    return new GpsData(active, time, date, lat_deg, lat_min, long_deg, long_min);
+    return new GpsData(active, time, date, latDeg, latMin, longDeg, longMin);
 }
 
-long DataParser::_parse_long(const char *str) {
+long DataParser::_parseLong(const char *str) {
     long res = 0;
     long tmp = 1;
     for (int i = strlen(str); i > 0; i--){
@@ -65,7 +65,7 @@ long DataParser::_parse_long(const char *str) {
     return res;
 }
 
-byte DataParser::_parse_byte(const char *str, int cnt) {
+byte DataParser::_parseByte(const char *str, int cnt) {
     byte res = 0;
     byte tmp = 1;
     for (; cnt > 0; cnt--){
@@ -75,7 +75,7 @@ byte DataParser::_parse_byte(const char *str, int cnt) {
     return res;
 }
 
-float DataParser::_parse_float(const char *str) {
+float DataParser::_parseFloat(const char *str) {
     float res = 0.0;
     float tmp = 1.0;
     res += 10.0 * (str[0] - 48) + str[1] - 48;

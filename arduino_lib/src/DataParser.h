@@ -11,9 +11,9 @@ class DataParser{
 private:
     char **_strings;
 
-    byte _parse_byte(const char *str, int cnt);
-    long _parse_long(const char *str);
-    float _parse_float(const char *str);
+    byte _parseByte(const char *str, int cnt);
+    long _parseLong(const char *str);
+    float _parseFloat(const char *str);
 public:
     DataParser(DataString *str);
     ~DataParser();
