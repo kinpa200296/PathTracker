@@ -10,7 +10,7 @@
 #include "Result.h"
 
 #define WRITE_DELAY (unsigned long)500
-#define MESSAGE_END 0
+#define MESSAGE_END '`'
 #define MESSAGE_BUFFER 100
 
 class PathTracker{
@@ -19,6 +19,9 @@ private:
     byte _currentCommand;
     byte *_buffer;
     byte _bufferPos;
+    bool _broadcastEnabled;
+
+    unsigned long _parseULong(const char *str);
 public:
     PathTracker();
     ~PathTracker();
@@ -29,11 +32,18 @@ public:
     bool analyze(byte b);
     void resetCommand();
 
-    byte getByte(byte pos);
-    int getInt(byte pos);
-    float getFloat(byte pos);
-    long getLong(byte pos);
-    char* getString(byte pos);
+    byte getByte(byte offset);
+    char* getString(byte offset);
+    unsigned long getULong(byte offset);
+    bool broadcastEnabled();
+    void enableBroadcast();
+    void disableBroadcast();
+    void pause();
+    void resume();
+    void stop();
+    bool paused();
+    bool resumed();
+    bool stopped();
 };
 
 #endif
