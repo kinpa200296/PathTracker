@@ -58,6 +58,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         options.color(0xFFFF0000);
         mMap.addPolyline(options);
         mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(dot4, 14));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(dot4, 14.464F));
     }
 }

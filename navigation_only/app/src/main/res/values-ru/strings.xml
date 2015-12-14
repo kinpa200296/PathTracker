@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Запись маршрутов alpha</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <!--drawer menu strings-->
+    <string name="add_path">Добавить маршрут</string>
+    <string name="my_path">Мои маршруты</string>
+    <string name="all_paths">Сеть маршрутов</string>
+    <string name="get_my_location">Моё местоположение</string>
+    <string name="settings">Настройки</string>
+    <string name="manage_device">Управление устройством</string>
+    <string name="device">Устройство</string>
+</resources>

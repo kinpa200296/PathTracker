@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_path_list"
+            android:icon="@drawable/ic_path_list"
+            android:title="@string/my_path"
+            android:checked="true"/>
+        <item
+            android:id="@+id/nav_all_path_map"
+            android:icon="@drawable/ic_all_paths_map"
+            android:title="@string/get_my_location" />
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="@string/settings" />
+    </group>
+
+    <item android:title="@string/device">
+        <menu>
+            <item
+                android:id="@+id/nav_device"
+                android:icon="@drawable/ic_bluetooth_tracker"
+                android:title="@string/manage_device" />
+            <item
+                android:id="@+id/nav_add_path"
+                android:icon="@drawable/ic_add_path"
+                android:title="@string/add_path" />
+        </menu>
+    </item>
+
+</menu>
