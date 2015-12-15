@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.shlandakovmax.navigation_only.database.PathDataContent;
 import com.shlandakovmax.navigation_only.database.PathDatabase;
 import com.shlandakovmax.navigation_only.dummy.DummyContent;
+import com.shlandakovmax.navigation_only.files.PathFileParser;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MapFragment.OnFragmentInteractionListener,
@@ -109,11 +110,6 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-
-    }
-
     //interaction with PathsItemFragment
     @Override
     public void onListFragmentInteraction(PathDataContent.PathRecord item, int code) {
@@ -134,10 +130,14 @@ public class MainActivity extends AppCompatActivity
         }
         else if (code == PathItemFragment.CODE_ITEM_OPEN){
             String file = item.filePath;
-            //code, that will call mapFragment with reading this path information from file
+            PathFileParser parser = new PathFileParser(this);
+            parser.readPathFromFile(file);
+            if (parser.points.size() == 0){
+                Toast.makeText(this, "Not found or empty path!", Toast.LENGTH_LONG).show();
+                return;
+            }
             transaction = getSupportFragmentManager().beginTransaction();
-            //change dummy path by path, loaded from file
-            mapFragment =  MapFragment.newInstance(DummyContent.dummyPath);
+            mapFragment =  MapFragment.newInstance(parser.points);
             transaction.replace(R.id.main_container, mapFragment);
             transaction.commit();
             Toast.makeText(this, "opening item called", Toast.LENGTH_SHORT).show();
@@ -161,5 +161,10 @@ public class MainActivity extends AppCompatActivity
             transaction.replace(R.id.main_container, listFragment);
             transaction.commit();
         }
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
     }
 }

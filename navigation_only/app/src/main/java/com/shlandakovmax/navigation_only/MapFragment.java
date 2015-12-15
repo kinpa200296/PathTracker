@@ -17,6 +17,8 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.LinkedList;
+
 
 public class MapFragment extends SupportMapFragment implements OnMapReadyCallback{
 
@@ -31,9 +33,16 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
         // Required empty public constructor
     }
 
-    public static MapFragment newInstance(LatLng[] dots) {
+    public static MapFragment newInstance(LinkedList<LatLng> dots) {
         Bundle args = new Bundle();
-        args.putParcelableArray("dots", dots);
+        double[] lat = new double[dots.size()];
+        double[] lng = new double[dots.size()];
+        for (int i = 0; i<dots.size(); i++){
+            lat[i] = dots.get(i).latitude;
+            lng[i] = dots.get(i).longitude;
+        }
+        args.putDoubleArray("lats", lat);
+        args.putDoubleArray("lngs", lng);
         MapFragment fragment = new MapFragment();
         fragment.setArguments(args);
         return fragment;
@@ -65,7 +74,13 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Bundle bundle = getArguments();
-        pathOnMap = (LatLng[]) bundle.getParcelableArray("dots");
+        double[] lat = bundle.getDoubleArray("lats");
+        double[] lng = bundle.getDoubleArray("lngs");
+        pathOnMap = new LatLng[lat.length];
+        for (int i = 0; i<lat.length; i++){
+            LatLng temp = new LatLng(lat[i], lng[i]);
+            pathOnMap[i] = temp;
+        }
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
@@ -98,6 +113,9 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
                 if (pathOnMap[i].longitude > maxLng) maxLng = pathOnMap[i].longitude;
                 else if (pathOnMap[i].longitude < minLng) minLng = pathOnMap[i].longitude;
             }
+        mMap.getUiSettings().setCompassEnabled(true);
+        mMap.getUiSettings().setAllGesturesEnabled(true);
+        mMap.getUiSettings().setMapToolbarEnabled(true);
         LatLngBounds bounds = new LatLngBounds(new LatLng(minLat,minLng), new LatLng(maxLat, maxLng));
         float zoom = getZoomLevel(bounds);
         Toast.makeText(getActivity(), String.valueOf(zoom),Toast.LENGTH_SHORT).show();

@@ -10,15 +10,14 @@ public class DummyContent {
 
     public static final List<PathDataContent.PathRecord> ITEMS = new LinkedList<PathDataContent.PathRecord>();
 
-    public static final LatLng[] dummyPath = new LatLng[]{
-            new LatLng(53 + 1.0/60*44.79739, 28 + 1.0/60*35.15628),
-            new LatLng(53 + 1.0/60*45.35991, 28 + 1.0/60*37.9694),
-            new LatLng(53 + 1.0/60*45.82746, 28 + 1.0/60*40.40885),
-            new LatLng(53 + 1.0/60*46.36647, 28 + 1.0/60*43.01363),
-            new LatLng(53 + 1.0/60*46.95141, 28 + 1.0/60*45.98174),
-            new LatLng(53 + 1.0/60*47.45422, 28 + 1.0/60*48.48637),
-            new LatLng(53 + 1.0/60*47.92648, 28 + 1.0/60*50.86092)
-    };
+    public static final LinkedList<LatLng> dummyPath = new LinkedList<>();
+    static { dummyPath.add(new LatLng(53 + 1.0 / 60 * 44.79739, 28 + 1.0 / 60 * 35.15628));
+            dummyPath.add(new LatLng(53 + 1.0/60*45.35991, 28 + 1.0/60*37.9694));
+            dummyPath.add(new LatLng(53 + 1.0/60*45.82746, 28 + 1.0/60*40.40885));
+            dummyPath.add(new LatLng(53 + 1.0/60*46.36647, 28 + 1.0/60*43.01363));
+            dummyPath.add(new LatLng(53 + 1.0/60*46.95141, 28 + 1.0/60*45.98174));
+            dummyPath.add(new LatLng(53 + 1.0/60*47.45422, 28 + 1.0/60*48.48637));
+            dummyPath.add(new LatLng(53 + 1.0/60*47.92648, 28 + 1.0/60*50.86092));}
 
     private static final int COUNT = 25;
 

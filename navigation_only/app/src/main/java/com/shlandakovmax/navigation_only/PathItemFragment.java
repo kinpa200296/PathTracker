@@ -2,6 +2,8 @@ package com.shlandakovmax.navigation_only;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -9,7 +11,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -88,15 +89,22 @@ public class PathItemFragment extends Fragment {
                 public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
 
                     View itemView = viewHolder.itemView;
-                    Log.d("len:", String.valueOf(itemView.getWidth()- (int)dX));
+                    Paint paint = new Paint();
+                    paint.setColor(Color.RED);
+                    if (dX >0)
+                        c.drawRect(itemView.getLeft(), itemView.getTop(), itemView.getRight(), itemView.getBottom(),paint);
+                    else  if (dX<0){
+                        paint.setColor(Color.YELLOW);
+                        c.drawRect(itemView.getLeft(), itemView.getTop(), itemView.getRight(), itemView.getBottom(),paint);
+                    }
                     Drawable d = ContextCompat.getDrawable(getActivity(), R.drawable.ic_menu_remove);
-                    if (dX < 190)
-                        d.setBounds(itemView.getLeft(), itemView.getTop(), (int) dX , itemView.getBottom());
+                    if (dX < 0)
+                        d.setBounds(itemView.getLeft(), itemView.getTop(), 0 , itemView.getBottom());
                     else
                         d.setBounds(itemView.getLeft(), itemView.getTop(), 180, itemView.getBottom());
                     Drawable d1 = ContextCompat.getDrawable(getActivity(), R.drawable.ic_menu_edit);
-                    if (dX > - 190)
-                        d1.setBounds(itemView.getWidth()+ (int)dX, itemView.getTop(), itemView.getRight(), itemView.getBottom());
+                    if (dX > 0)
+                        d1.setBounds(itemView.getWidth(), itemView.getTop(), itemView.getRight(), itemView.getBottom());
                     else d1.setBounds(itemView.getWidth() - 180, itemView.getTop(), itemView.getRight(), itemView.getBottom());
                     d1.draw(c);
                     d.draw(c);

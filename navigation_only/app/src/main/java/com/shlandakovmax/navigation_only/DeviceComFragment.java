@@ -26,12 +26,6 @@ public class DeviceComFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_device_com, container, false);
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
 
     @Override
     public void onAttach(Context context) {
