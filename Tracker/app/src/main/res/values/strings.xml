@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Path tracker alpha</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <!--drawer menu strings-->
+    <string name="add_path">Add new path</string>
+    <string name="my_path">My paths</string>
+    <string name="get_my_location">My appearance</string>
+    <string name="all_paths">All paths on map</string>
+    <string name="settings">Settings</string>
+    <string name="manage_device">Manage tracker</string>
+    <string name="device">Device</string>
+
+    <!--settings fragment strings-->
+    <string name="BT_off">Bluetooth off</string>
+    <string name="BT_on">Bluetooth on</string>
+    <string name="device_off">Device not connected</string>
+    <string name="device_on">Device connected</string>
+    <string name="maps_on">Online maps use</string>
+    <string name="maps_off">Offline maps use</string>
+    <string name="deviceName">HC-05</string>
+
+    <!--list context menu elements-->
+    <string name="list_item_edit">Edit</string>
+    <string name="list_item_open">Open</string>
+    <string name="list_item_delete">Delete</string>
+
+    <!--create fragment elements-->
+    <string name="create_name_hint">Your path\'s name:</string>
+    <string name="create_descr_hint">Some words about it:</string>
+    <string name="btnOk">OK</string>
+    <string name="btnCancel">Cancel</string>
+</resources>
