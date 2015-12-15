@@ -1,6 +1,7 @@
 package com.pathtracker.android.tracker;
 
 import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
@@ -14,6 +15,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.pathtracker.android.bluetooth.PathTracker;
 import com.pathtracker.android.bluetoothservice.BluetoothConnector;
 import com.pathtracker.android.tracker.database.PathDataContent;
 import com.pathtracker.android.tracker.database.PathDatabase;
@@ -26,12 +28,20 @@ public class MainActivity extends AppCompatActivity
         DeviceComFragment.OnFragmentInteractionListener, CreatePathFragment.OnFragmentInteractionListener,
         BluetoothConnector.BluetoothConnectorListener{
 
-    private Fragment mapFragment, listFragment, addFragment, deviceFragment;
-    private CreatePathFragment createFragment;
-    private SettingsFragment settingsFragment;
-    private PathDataContent.PathRecord editTemp;
-    private FragmentTransaction transaction;
+    private Fragment _mapFragment, _listFragment, _addFragment, _deviceFragment;
+    private CreatePathFragment _createFragment;
+    private SettingsFragment _settingsFragment;
+    private PathDataContent.PathRecord _editTemp;
+    private FragmentTransaction _transaction;
+
+    PathTracker tracker;
+    Intent serviceIntent;
+    BluetoothServiceConnection serviceConnection;
+
     public PathDatabase database;
+
+    public static final String serviceClassName = "com.pathtracker.android.bluetoothservice.BluetoothService";
+    public static final String servicePackage = "com.pathtracker.android.bluetoothservice";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +49,13 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        tracker = new PathTracker();
+        serviceIntent = new Intent(serviceClassName);
+        serviceIntent.setPackage(servicePackage);
+        serviceConnection = new BluetoothServiceConnection(tracker);
+
+        startService(serviceIntent);
 
         /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -68,14 +85,32 @@ public class MainActivity extends AppCompatActivity
         }
         PathDataContent.getAllPaths(database);
 
-        addFragment = new AddPathFragment();
-        deviceFragment = new DeviceComFragment();
-        settingsFragment = new SettingsFragment();
+        _addFragment = new AddPathFragment();
+        _deviceFragment = new DeviceComFragment();
+        _settingsFragment = new SettingsFragment();
 
-        listFragment = new PathItemFragment();
-        transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.main_container, listFragment);
-        transaction.commit();
+        _listFragment = new PathItemFragment();
+        _transaction = getSupportFragmentManager().beginTransaction();
+        _transaction.replace(R.id.main_container, _listFragment);
+        _transaction.commit();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopService(serviceIntent);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        bindService(serviceIntent, serviceConnection, BIND_ADJUST_WITH_ACTIVITY);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(serviceConnection);
     }
 
     @Override
@@ -93,21 +128,21 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-        transaction = getSupportFragmentManager().beginTransaction();
+        _transaction = getSupportFragmentManager().beginTransaction();
         if (id == R.id.nav_add_path) {
-            transaction.replace(R.id.main_container, addFragment);
+            _transaction.replace(R.id.main_container, _addFragment);
         } else if (id == R.id.nav_path_list) {
-            transaction.replace(R.id.main_container, listFragment);
+            _transaction.replace(R.id.main_container, _listFragment);
         } else if (id == R.id.nav_all_path_map) {
-            mapFragment = MapFragment.newInstance(DummyContent.dummyPath);
-            transaction.replace(R.id.main_container, mapFragment);
+            _mapFragment = MapFragment.newInstance(DummyContent.dummyPath);
+            _transaction.replace(R.id.main_container, _mapFragment);
         } else if (id == R.id.nav_settings) {
-            transaction.replace(R.id.main_container, settingsFragment);
+            _transaction.replace(R.id.main_container, _settingsFragment);
         } else if (id == R.id.nav_device) {
-            transaction.replace(R.id.main_container, deviceFragment);
+            _transaction.replace(R.id.main_container, _deviceFragment);
         }
 
-        transaction.commit();
+        _transaction.commit();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -123,11 +158,11 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(this, "deleting item called", Toast.LENGTH_SHORT).show();
         }
         else if (code == PathItemFragment.CODE_ITEM_EDIT){
-            editTemp = item;
-            transaction = getSupportFragmentManager().beginTransaction();
-            createFragment = CreatePathFragment.newInstance(item.name, item.description, CreatePathFragment.CALL_FOR_EDIT);
-            transaction.replace(R.id.main_container, createFragment);
-            transaction.commit();
+            _editTemp = item;
+            _transaction = getSupportFragmentManager().beginTransaction();
+            _createFragment = CreatePathFragment.newInstance(item.name, item.description, CreatePathFragment.CALL_FOR_EDIT);
+            _transaction.replace(R.id.main_container, _createFragment);
+            _transaction.commit();
             //int id = database.getPathIdByFilename(item.filePath);
             //database.updateRowById(id, item);
             Toast.makeText(this, "editing item called", Toast.LENGTH_SHORT).show();
@@ -140,10 +175,10 @@ public class MainActivity extends AppCompatActivity
                 Toast.makeText(this, "Not found or empty path!", Toast.LENGTH_LONG).show();
                 return;
             }
-            transaction = getSupportFragmentManager().beginTransaction();
-            mapFragment =  MapFragment.newInstance(parser.points);
-            transaction.replace(R.id.main_container, mapFragment);
-            transaction.commit();
+            _transaction = getSupportFragmentManager().beginTransaction();
+            _mapFragment =  MapFragment.newInstance(parser.points);
+            _transaction.replace(R.id.main_container, _mapFragment);
+            _transaction.commit();
             Toast.makeText(this, "opening item called", Toast.LENGTH_SHORT).show();
         }
     }
@@ -151,19 +186,19 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onCreateFragmentInteraction(String name, String description, int result_code) {
-        transaction = getSupportFragmentManager().beginTransaction();
+        _transaction = getSupportFragmentManager().beginTransaction();
         if (result_code == CreatePathFragment.RESULT_OK){
-            int id = database.getPathIdByFilename(editTemp.filePath);
-            database.updateRowById(id,new PathDataContent.PathRecord(name, editTemp.startDate, description, editTemp.filePath));
-            editTemp = null; listFragment = null;
+            int id = database.getPathIdByFilename(_editTemp.filePath);
+            database.updateRowById(id,new PathDataContent.PathRecord(name, _editTemp.startDate, description, _editTemp.filePath));
+            _editTemp = null; _listFragment = null;
             PathDataContent.getAllPaths(database);
-            listFragment = new PathItemFragment();
-            transaction.replace(R.id.main_container, listFragment);
-            transaction.commit();
+            _listFragment = new PathItemFragment();
+            _transaction.replace(R.id.main_container, _listFragment);
+            _transaction.commit();
         }
         else if (result_code == CreatePathFragment.RESULT_CANCEL){
-            transaction.replace(R.id.main_container, listFragment);
-            transaction.commit();
+            _transaction.replace(R.id.main_container, _listFragment);
+            _transaction.commit();
         }
     }
 
@@ -174,17 +209,23 @@ public class MainActivity extends AppCompatActivity
     //region BluetoothConnector interface implemented here
     @Override
     public void onConnect(BluetoothSocket socket) {
-        settingsFragment.onConnect(socket);
+        _settingsFragment.onConnect(socket);
+        if (serviceConnection.connected){
+            serviceConnection.binder.setBtSocket(socket);
+        }
     }
 
     @Override
     public void onDisconnect() {
-        settingsFragment.onDisconnect();
+        _settingsFragment.onDisconnect();
+        if (serviceConnection.connected){
+            serviceConnection.binder.setBtSocket(null);
+        }
     }
 
     @Override
     public void onStateChange() {
-        settingsFragment.onStateChange();
+        _settingsFragment.onStateChange();
     }
     //endregion
 }

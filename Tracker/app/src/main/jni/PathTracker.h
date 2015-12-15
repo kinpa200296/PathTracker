@@ -41,6 +41,9 @@ JNIEXPORT jint JNICALL
 JNIEXPORT jint JNICALL
         Java_com_pathtracker_android_bluetooth_PathTracker_commandStopPath(JNIEnv *env, jclass type, jbyteArray bytes);
 
+JNIEXPORT jint JNICALL
+        Java_com_pathtracker_android_bluetooth_PathTracker_commandGetState(JNIEnv *env, jclass type, jbyteArray bytes);
+
 JNIEXPORT jboolean JNICALL
         Java_com_pathtracker_android_bluetooth_PathTracker_isMessageEnd(JNIEnv *env, jobject obj, jbyte b);
 

@@ -136,6 +136,19 @@ JNIEXPORT jint JNICALL
     return msgLen;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_pathtracker_android_bluetooth_PathTracker_commandGetState(JNIEnv *env, jclass type, jbyteArray bytes){
+    jboolean isCopy = (jboolean) false;
+    jbyte *data = env->GetByteArrayElements(bytes, &isCopy);
+
+    int msgLen = 0;
+    data[msgLen++] = COMMAND_GET_STATE;
+    data[msgLen++] = MESSAGE_END;
+
+    env->ReleaseByteArrayElements(bytes, data, 0);
+    return msgLen;
+}
+
 JNIEXPORT jboolean JNICALL
         Java_com_pathtracker_android_bluetooth_PathTracker_isMessageEnd(JNIEnv *env, jobject obj, jbyte b){
     return (jboolean) (b == MESSAGE_END);

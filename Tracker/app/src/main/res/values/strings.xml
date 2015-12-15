@@ -35,4 +35,6 @@
     <string name="create_descr_hint">Some words about it:</string>
     <string name="btnOk">OK</string>
     <string name="btnCancel">Cancel</string>
+
+    <string name="service_name">BluetoothService</string>
 </resources>
