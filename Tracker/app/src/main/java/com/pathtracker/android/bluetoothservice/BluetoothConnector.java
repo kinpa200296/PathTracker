@@ -24,6 +24,7 @@ public class BluetoothConnector {
 
     public static final String CONNECT_DEVICE = "com.pathtracker.android.pathtracker.connect";
     public static final String DISCONNECT_DEVICE = "com.pathtracker.android.pathtracker.disconnect";
+    public static final String SWITCH_BLUETOOTH = "com.pathtracker.android.pathtracker.bluetoothSwitch";
 
     public final String BLUETOOTH = "Bluetooth";
 
@@ -35,7 +36,7 @@ public class BluetoothConnector {
                     + " must implement OnFragmentInteractionListener");
         }
         _mac = mac_address;
-        BluetoothManager btManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        final BluetoothManager btManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
         BroadcastReceiver br = new BroadcastReceiver() {
             @Override
@@ -98,10 +99,31 @@ public class BluetoothConnector {
 
         filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         context.registerReceiver(br, filter);
+
+        br = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int state = btAdapter.getState();
+                if (btAdapter.getState() == BluetoothAdapter.STATE_OFF){
+                    btAdapter.enable();
+                }
+                else if (btAdapter.getState() == BluetoothAdapter.STATE_ON){
+                    btAdapter.disable();
+                }
+                return;
+            }
+        };
+
+        filter = new IntentFilter(SWITCH_BLUETOOTH);
+        context.registerReceiver(br, filter);
     }
 
     public String getMacAddress(){
         return _mac;
+    }
+
+    public int getBtState(){
+        return btAdapter.getState();
     }
 
     public interface BluetoothConnectorListener{
@@ -109,4 +131,5 @@ public class BluetoothConnector {
         void onDisconnect();
         void onStateChange();
     }
+
 }

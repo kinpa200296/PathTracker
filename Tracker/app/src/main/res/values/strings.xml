@@ -23,6 +23,7 @@
     <string name="maps_on">Online maps use</string>
     <string name="maps_off">Offline maps use</string>
     <string name="deviceName">HC-05</string>
+    <string name="mac_address">"20:15:05:22:03:44"</string>
 
     <!--list context menu elements-->
     <string name="list_item_edit">Edit</string>

@@ -25,14 +25,4 @@
         android:textSize="20sp"
         android:enabled="false"
         android:layout_marginBottom="20dp"/>
-
-    <Switch
-        android:id="@+id/mapsSwitch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/maps_on"
-        android:textSize="20sp"
-        android:enabled="false"
-        android:layout_marginBottom="20dp"/>
-
 </LinearLayout>

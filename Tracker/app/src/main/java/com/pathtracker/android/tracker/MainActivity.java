@@ -1,5 +1,6 @@
 package com.pathtracker.android.tracker;
 
+import android.bluetooth.BluetoothSocket;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
@@ -13,6 +14,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.pathtracker.android.bluetoothservice.BluetoothConnector;
 import com.pathtracker.android.tracker.database.PathDataContent;
 import com.pathtracker.android.tracker.database.PathDatabase;
 import com.pathtracker.android.tracker.dummy.DummyContent;
@@ -21,10 +23,12 @@ import com.pathtracker.android.tracker.files.PathFileParser;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MapFragment.OnFragmentInteractionListener,
         PathItemFragment.OnListFragmentInteractionListener, AddPathFragment.OnFragmentInteractionListener,
-        DeviceComFragment.OnFragmentInteractionListener, CreatePathFragment.OnFragmentInteractionListener{
+        DeviceComFragment.OnFragmentInteractionListener, CreatePathFragment.OnFragmentInteractionListener,
+        BluetoothConnector.BluetoothConnectorListener{
 
-    private Fragment mapFragment, listFragment, addFragment, deviceFragment, settingsFragment;
+    private Fragment mapFragment, listFragment, addFragment, deviceFragment;
     private CreatePathFragment createFragment;
+    private SettingsFragment settingsFragment;
     private PathDataContent.PathRecord editTemp;
     private FragmentTransaction transaction;
     public PathDatabase database;
@@ -167,4 +171,20 @@ public class MainActivity extends AppCompatActivity
     public void onFragmentInteraction(Uri uri) {
 
     }
+    //region BluetoothConnector interface implemented here
+    @Override
+    public void onConnect(BluetoothSocket socket) {
+        settingsFragment.onConnect(socket);
+    }
+
+    @Override
+    public void onDisconnect() {
+        settingsFragment.onDisconnect();
+    }
+
+    @Override
+    public void onStateChange() {
+        settingsFragment.onStateChange();
+    }
+    //endregion
 }
