@@ -11,5 +11,6 @@
 #define COMMAND_PAUSE_PATH (byte)8
 #define COMMAND_RESUME_PATH (byte)9
 #define COMMAND_STOP_PATH (byte)10
+#define COMMAND_GET_STATE byte(11)
 
 #endif

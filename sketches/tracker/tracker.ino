@@ -187,11 +187,19 @@ void processCommand(){
         response(RESULT_ERROR, "NoDataFile");
       }
       break;
+    case COMMAND_GET_STATE:
+      sendState();
+      break;
     default:
       response(RESULT_UNKNOWN_COMMAND, "Unknown");
       break;
   }
   tracker.resetCommand();
+}
+
+void sendState(){
+  byte state = tracker.getState();
+  response(RESULT_STATE, &state, 1);
 }
 
 void listPaths(){
@@ -210,6 +218,9 @@ void listPaths(){
     }
     if (cnt == 0){
       response(RESULT_ERROR, "NoPaths");
+    }
+    else{
+      response(RESULT_PATHS_LIST_SENT, "");
     }
   }
   else{
