@@ -123,14 +123,14 @@ void response(byte result, const char* msg){
   Serial.write(result);
   Serial.print(msg);
   Serial.write(MESSAGE_END);
-  Serial.println();
+  //Serial.println();
 }
 
 void response(byte result, const byte* msg, int msgSize){
   Serial.write(result);
   Serial.write(msg, msgSize);
   Serial.write(MESSAGE_END);
-  Serial.println();
+  //Serial.println();
 }
 
 void processCommand(){

@@ -10,7 +10,7 @@
 #include "Result.h"
 
 #define WRITE_DELAY (unsigned long)500
-#define MESSAGE_END '`'
+#define MESSAGE_END (byte)0
 #define MESSAGE_BUFFER 100
 
 class PathTracker{
