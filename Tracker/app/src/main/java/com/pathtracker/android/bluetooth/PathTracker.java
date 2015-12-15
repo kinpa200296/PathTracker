@@ -1,5 +1,12 @@
 package com.pathtracker.android.bluetooth;
 
+import android.bluetooth.BluetoothSocket;
+import android.util.Log;
+
+import com.pathtracker.android.bluetoothservice.BluetoothService;
+
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class PathTracker {
@@ -11,6 +18,19 @@ public class PathTracker {
 
     public static byte[] newBuffer(){
         return new byte[MESSAGE_BUFFER_LENGTH];
+    }
+
+    public static boolean sendMessage(BluetoothSocket btSocket, byte[] msg, int msgSize){
+        try {
+            OutputStream stream = btSocket.getOutputStream();
+            stream.write(msg, 0, msgSize);
+            stream.flush();
+        }
+        catch (IOException e){
+            Log.e(BluetoothService.LOG_TAG, e.getMessage());
+            return false;
+        }
+        return true;
     }
 
     public static native int commandListPath(byte[] buffer);

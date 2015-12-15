@@ -27,4 +27,15 @@ public class BluetoothBinder extends Binder {
             _listener.tracker = tracker;
         }
     }
+
+    public boolean sendMessage(byte[] msg, int msgSize){
+        if (_listener != null){
+            if(_listener.btSocket != null && _listener.tracker != null){
+                if (_listener.btSocket.isConnected()){
+                    return PathTracker.sendMessage(_listener.btSocket, msg, msgSize);
+                }
+            }
+        }
+        return false;
+    }
 }
