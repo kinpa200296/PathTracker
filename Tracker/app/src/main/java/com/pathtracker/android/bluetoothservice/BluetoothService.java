@@ -43,7 +43,7 @@ public class BluetoothService extends Service {
         super.onDestroy();
         _socketListener.stop = true;
         if (_listenerThread.isAlive()){
-            _listenerThread.stop();
+            _listenerThread.interrupt();
         }
     }
 }

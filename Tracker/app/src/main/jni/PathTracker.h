@@ -11,7 +11,6 @@ extern "C" {
 #include "Result.h"
 #include "Command.h"
 
-#define MESSAGE_END (byte)0
 #define MESSAGE_BUFFER 100
 
 JNIEXPORT jint JNICALL
