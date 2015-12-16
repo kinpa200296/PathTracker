@@ -22,9 +22,11 @@ import com.pathtracker.android.tracker.database.PathDatabase;
 import com.pathtracker.android.tracker.dummy.DummyContent;
 import com.pathtracker.android.tracker.files.PathFileParser;
 
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MapFragment.OnFragmentInteractionListener,
-        PathItemFragment.OnListFragmentInteractionListener, AddPathFragment.OnFragmentInteractionListener,
+        PathItemFragment.OnListFragmentInteractionListener, AddPathFragment.OnAddPathInteractionListener,
         DeviceComFragment.OnFragmentInteractionListener, CreatePathFragment.OnFragmentInteractionListener,
         BluetoothConnector.BluetoothConnectorListener{
 
@@ -134,7 +136,8 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_path_list) {
             _transaction.replace(R.id.main_container, _listFragment);
         } else if (id == R.id.nav_all_path_map) {
-            _mapFragment = MapFragment.newInstance(DummyContent.dummyPath);
+            //check connection and show map with your current location, else show no_device_connection xml
+            _mapFragment = MapFragment.newInstance(DummyContent.dummyPath, MapFragment.VIEW_MODE_LOCATION);
             _transaction.replace(R.id.main_container, _mapFragment);
         } else if (id == R.id.nav_settings) {
             _transaction.replace(R.id.main_container, _settingsFragment);
@@ -176,7 +179,7 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
             _transaction = getSupportFragmentManager().beginTransaction();
-            _mapFragment =  MapFragment.newInstance(parser.points);
+            _mapFragment =  MapFragment.newInstance(parser.points, MapFragment.VIEW_MODE_PATH);
             _transaction.replace(R.id.main_container, _mapFragment);
             _transaction.commit();
             Toast.makeText(this, "opening item called", Toast.LENGTH_SHORT).show();
@@ -228,4 +231,25 @@ public class MainActivity extends AppCompatActivity
         _settingsFragment.onStateChange();
     }
     //endregion
+
+    //region AddPath interface implemented here
+    @Override
+    public void onAddPathInteraction(int fileIndex, int interact_code) {
+        _transaction = getSupportFragmentManager().beginTransaction();
+        //createpathfragment is called here and interaction continues
+    }
+
+    @Override
+    public void onGotoSettingsInteraction() {
+        _transaction = getSupportFragmentManager().beginTransaction();
+        _transaction.replace(R.id.main_container, _settingsFragment);
+        _transaction.commit();
+    }
+
+    @Override
+    public List<String> getFiles() {
+        //here we should take files' name strings from the device
+        return null;
+    }
+
 }

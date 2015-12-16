@@ -37,4 +37,8 @@
     <string name="btnCancel">Cancel</string>
 
     <string name="service_name">BluetoothService</string>
+
+    <!--no device connection string-->
+    <string name="no_connection">Sorry, your tracker is not connected</string>
+    <string name="goto_settings">Press here to try connect</string>
 </resources>

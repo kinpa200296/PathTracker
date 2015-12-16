@@ -1,11 +1,11 @@
 package com.pathtracker.android.tracker;
 
 import android.app.Activity;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -22,27 +22,40 @@ import java.util.LinkedList;
 
 public class MapFragment extends SupportMapFragment implements OnMapReadyCallback{
 
-    //possible as a list of paths, set to be displayed
+
+    public static int VIEW_MODE_NO_CONNECTION = 0;
+    public static int VIEW_MODE_PATH = 1;
+    public static int VIEW_MODE_LOCATION = 2;
+
+
     LatLng[] pathOnMap;
+    private int _mode;
     private GoogleMap mMap;
     private OnFragmentInteractionListener mListener;
     private static double WORLD_DIM = 256;
     private static float ZOOM_MAX = 18;
 
+    private static final String ARG_MODE = "mode";
+    private static final String ARA_LATITUDE = "lats";
+    private static final String ARG_LONGTITUDE = "lngs";
+
     public MapFragment() {
         // Required empty public constructor
     }
 
-    public static MapFragment newInstance(LinkedList<LatLng> dots) {
+    public static MapFragment newInstance(LinkedList<LatLng> dots, int mode) {
         Bundle args = new Bundle();
-        double[] lat = new double[dots.size()];
-        double[] lng = new double[dots.size()];
-        for (int i = 0; i<dots.size(); i++){
-            lat[i] = dots.get(i).latitude;
-            lng[i] = dots.get(i).longitude;
+        args.putInt(ARG_MODE, mode);
+        if (mode != VIEW_MODE_NO_CONNECTION){
+            double[] lat = new double[dots.size()];
+            double[] lng = new double[dots.size()];
+            for (int i = 0; i<dots.size(); i++){
+                lat[i] = dots.get(i).latitude;
+                lng[i] = dots.get(i).longitude;
+            }
+            args.putDoubleArray(ARA_LATITUDE, lat);
+            args.putDoubleArray(ARG_LONGTITUDE, lng);
         }
-        args.putDoubleArray("lats", lat);
-        args.putDoubleArray("lngs", lng);
         MapFragment fragment = new MapFragment();
         fragment.setArguments(args);
         return fragment;
@@ -74,14 +87,28 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Bundle bundle = getArguments();
-        double[] lat = bundle.getDoubleArray("lats");
-        double[] lng = bundle.getDoubleArray("lngs");
-        pathOnMap = new LatLng[lat.length];
-        for (int i = 0; i<lat.length; i++){
-            LatLng temp = new LatLng(lat[i], lng[i]);
-            pathOnMap[i] = temp;
+        _mode = bundle.getInt(ARG_MODE);
+        if ( _mode != VIEW_MODE_NO_CONNECTION){
+            double[] lat = bundle.getDoubleArray("lats");
+            double[] lng = bundle.getDoubleArray("lngs");
+            pathOnMap = new LatLng[lat.length];
+            for (int i = 0; i<lat.length; i++){
+                LatLng temp = new LatLng(lat[i], lng[i]);
+                pathOnMap[i] = temp;
+            }
+            return super.onCreateView(inflater, container, savedInstanceState);
         }
-        return super.onCreateView(inflater, container, savedInstanceState);
+        else {
+            View v = inflater.inflate(R.layout.fragment_no_device_connection_found, container, false);
+            Button btnSettings = (Button) v.findViewById(R.id.goto_settings);
+            btnSettings.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.onGotoSettingsInteraction();
+                }
+            });
+            return v;
+        }
     }
 
     @Override
@@ -93,33 +120,49 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        DrawOnMap();
+        if (_mode == VIEW_MODE_PATH)
+            DrawPathOnMap();
+        else if(_mode == VIEW_MODE_LOCATION)
+            if (pathOnMap.length == 0)
+                DrawLocation(null);
+            else DrawLocation(pathOnMap[pathOnMap.length - 1]);
     }
 
-    private void DrawOnMap(){
-        mMap.addMarker(new MarkerOptions().position(pathOnMap[0]).title("Path starts here..."));
-        mMap.addMarker(new MarkerOptions().position(pathOnMap[pathOnMap.length - 1]).title("And it\'s end is there"));
-        PolylineOptions options = new PolylineOptions();
-        options.add(pathOnMap);
-        options.color(0xFFFF0000);
-        mMap.addPolyline(options);
-        //mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-        double maxLat = pathOnMap[0].latitude, minLat = pathOnMap[0].latitude,
-                maxLng = pathOnMap[0].longitude, minLng = pathOnMap[0].longitude;
-        if (pathOnMap.length >1)
-            for (int i = 1; i<pathOnMap.length; i++){
-                if (pathOnMap[i].latitude > maxLat) maxLat = pathOnMap[i].latitude;
-                else if (pathOnMap[i].latitude < minLat) minLat = pathOnMap[i].latitude;
-                if (pathOnMap[i].longitude > maxLng) maxLng = pathOnMap[i].longitude;
-                else if (pathOnMap[i].longitude < minLng) minLng = pathOnMap[i].longitude;
-            }
-        mMap.getUiSettings().setCompassEnabled(true);
-        mMap.getUiSettings().setAllGesturesEnabled(true);
-        mMap.getUiSettings().setMapToolbarEnabled(true);
-        LatLngBounds bounds = new LatLngBounds(new LatLng(minLat,minLng), new LatLng(maxLat, maxLng));
-        float zoom = getZoomLevel(bounds);
-        Toast.makeText(getActivity(), String.valueOf(zoom),Toast.LENGTH_SHORT).show();
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(bounds.getCenter(), getZoomLevel(bounds)));
+    private void DrawPathOnMap(){
+        if (pathOnMap.length != 0) {
+            mMap.addMarker(new MarkerOptions().position(pathOnMap[0]).title("Path starts here..."));
+            mMap.addMarker(new MarkerOptions().position(pathOnMap[pathOnMap.length - 1]).title("And it\'s end is there"));
+            PolylineOptions options = new PolylineOptions();
+            options.add(pathOnMap);
+            options.color(0xFFFF0000);
+            mMap.addPolyline(options);
+            //mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+            double maxLat = pathOnMap[0].latitude, minLat = pathOnMap[0].latitude,
+                    maxLng = pathOnMap[0].longitude, minLng = pathOnMap[0].longitude;
+            if (pathOnMap.length > 1)
+                for (int i = 1; i < pathOnMap.length; i++) {
+                    if (pathOnMap[i].latitude > maxLat) maxLat = pathOnMap[i].latitude;
+                    else if (pathOnMap[i].latitude < minLat) minLat = pathOnMap[i].latitude;
+                    if (pathOnMap[i].longitude > maxLng) maxLng = pathOnMap[i].longitude;
+                    else if (pathOnMap[i].longitude < minLng) minLng = pathOnMap[i].longitude;
+                }
+            mMap.getUiSettings().setCompassEnabled(true);
+            mMap.getUiSettings().setAllGesturesEnabled(true);
+            mMap.getUiSettings().setMapToolbarEnabled(true);
+            LatLngBounds bounds = new LatLngBounds(new LatLng(minLat, minLng), new LatLng(maxLat, maxLng));
+            float zoom = getZoomLevel(bounds);
+            Toast.makeText(getActivity(), String.valueOf(zoom), Toast.LENGTH_SHORT).show();
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(bounds.getCenter(), getZoomLevel(bounds)));
+        }
+        else Toast.makeText(getActivity(), "Oops! Looks like empty path found here...", Toast.LENGTH_LONG).show();
+    }
+
+    private void DrawLocation(LatLng location){
+        if (location != null) {
+            mMap.clear();
+            mMap.addMarker(new MarkerOptions().position(location).title("Your estimated location"));
+        }
+        else Toast.makeText(getActivity(), "Can't find your location yet! Seems like a bad sigmal...", Toast.LENGTH_LONG).show();
     }
 
     public float getZoomLevel(LatLngBounds bounds){
@@ -146,6 +189,6 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     }
 
     public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(Uri uri);
+        void onGotoSettingsInteraction();
     }
 }

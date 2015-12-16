@@ -24,18 +24,14 @@ public class PathItemFragment extends Fragment {
     public final static int CODE_ITEM_EDIT = 2;
     public final static int CODE_ITEM_OPEN = 1;
 
-    // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
     PathDataContent dataContent;
-    // TODO: Customize parameters
     private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
 
     public PathItemFragment() {
     }
-
-    // TODO: Customize parameter initialization
-    @SuppressWarnings("unused")
+    //TODO:may be deleted in final ver.
     public static PathItemFragment newInstance(int columnCount) {
         PathItemFragment fragment = new PathItemFragment();
         Bundle args = new Bundle();
