@@ -40,5 +40,5 @@
 
     <!--no device connection string-->
     <string name="no_connection">Sorry, your tracker is not connected</string>
-    <string name="goto_settings">Press here to try connect</string>
+    <string name="goto_settings">Press here to try to connect</string>
 </resources>

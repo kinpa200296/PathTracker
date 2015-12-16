@@ -12,25 +12,29 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.pathtracker.android.bluetooth.PathTracker;
 import com.pathtracker.android.bluetoothservice.BluetoothConnector;
+import com.pathtracker.android.bluetoothservice.BluetoothService;
 import com.pathtracker.android.tracker.database.PathDataContent;
 import com.pathtracker.android.tracker.database.PathDatabase;
 import com.pathtracker.android.tracker.dummy.DummyContent;
 import com.pathtracker.android.tracker.files.PathFileParser;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MapFragment.OnFragmentInteractionListener,
         PathItemFragment.OnListFragmentInteractionListener, AddPathFragment.OnAddPathInteractionListener,
         DeviceComFragment.OnFragmentInteractionListener, CreatePathFragment.OnFragmentInteractionListener,
-        BluetoothConnector.BluetoothConnectorListener{
+        BluetoothConnector.BluetoothConnectorListener, NoConnectionFragment.onNoConnection {
 
-    private Fragment _mapFragment, _listFragment, _addFragment, _deviceFragment;
+    private Fragment _mapFragment, _listFragment, _addFragment, _deviceFragment, _noConnetionFragment;
     private CreatePathFragment _createFragment;
     private SettingsFragment _settingsFragment;
     private PathDataContent.PathRecord _editTemp;
@@ -39,11 +43,10 @@ public class MainActivity extends AppCompatActivity
     PathTracker tracker;
     Intent serviceIntent;
     BluetoothServiceConnection serviceConnection;
+    ViewLocationListener locationListener;
 
     public PathDatabase database;
-
-    public static final String serviceClassName = "com.pathtracker.android.bluetoothservice.BluetoothService";
-    public static final String servicePackage = "com.pathtracker.android.bluetoothservice";
+    public static final String LOG_TAG = "PathTracker";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,11 +56,12 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         tracker = new PathTracker();
-        serviceIntent = new Intent(serviceClassName);
-        serviceIntent.setPackage(servicePackage);
+        serviceIntent = new Intent(this, BluetoothService.class);
         serviceConnection = new BluetoothServiceConnection(tracker);
 
         startService(serviceIntent);
+
+        locationListener = new ViewLocationListener(this);
 
         /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -79,8 +83,8 @@ public class MainActivity extends AppCompatActivity
 
         database = new PathDatabase(this);
         database.open();
-        if (database.isEmptyDatabase()){
-            for (int i = 0; i < DummyContent.ITEMS.size(); i++){
+        if (database.isEmptyDatabase()) {
+            for (int i = 0; i < DummyContent.ITEMS.size(); i++) {
                 database.addPath(DummyContent.ITEMS.get(i).name, DummyContent.ITEMS.get(i).description,
                         DummyContent.ITEMS.get(i).startDate, DummyContent.ITEMS.get(i).filePath);
             }
@@ -90,6 +94,7 @@ public class MainActivity extends AppCompatActivity
         _addFragment = new AddPathFragment();
         _deviceFragment = new DeviceComFragment();
         _settingsFragment = new SettingsFragment();
+        _noConnetionFragment = new NoConnectionFragment();
 
         _listFragment = new PathItemFragment();
         _transaction = getSupportFragmentManager().beginTransaction();
@@ -137,8 +142,21 @@ public class MainActivity extends AppCompatActivity
             _transaction.replace(R.id.main_container, _listFragment);
         } else if (id == R.id.nav_all_path_map) {
             //check connection and show map with your current location, else show no_device_connection xml
-            _mapFragment = MapFragment.newInstance(DummyContent.dummyPath, MapFragment.VIEW_MODE_LOCATION);
-            _transaction.replace(R.id.main_container, _mapFragment);
+            if (serviceConnection.binder.isConnectedToDevice()) {
+                locationListener.startListening();
+                enableBroadcast();
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                LinkedList<LatLng> list = new LinkedList<>();
+                list.add(locationListener.getCurrentLocation());
+                _mapFragment = MapFragment.newInstance(list, MapFragment.VIEW_MODE_LOCATION);
+                _transaction.replace(R.id.main_container, _mapFragment);
+            }else {
+                _transaction.replace(R.id.main_container, _noConnetionFragment);
+            }
         } else if (id == R.id.nav_settings) {
             _transaction.replace(R.id.main_container, _settingsFragment);
         } else if (id == R.id.nav_device) {
@@ -155,12 +173,11 @@ public class MainActivity extends AppCompatActivity
     //interaction with PathsItemFragment
     @Override
     public void onListFragmentInteraction(PathDataContent.PathRecord item, int code) {
-        if (code == PathItemFragment.CODE_ITEM_DELETE){
+        if (code == PathItemFragment.CODE_ITEM_DELETE) {
             int id = database.getPathIdByFilename(item.filePath);
             database.removePath(id);
             Toast.makeText(this, "deleting item called", Toast.LENGTH_SHORT).show();
-        }
-        else if (code == PathItemFragment.CODE_ITEM_EDIT){
+        } else if (code == PathItemFragment.CODE_ITEM_EDIT) {
             _editTemp = item;
             _transaction = getSupportFragmentManager().beginTransaction();
             _createFragment = CreatePathFragment.newInstance(item.name, item.description, CreatePathFragment.CALL_FOR_EDIT);
@@ -169,17 +186,16 @@ public class MainActivity extends AppCompatActivity
             //int id = database.getPathIdByFilename(item.filePath);
             //database.updateRowById(id, item);
             Toast.makeText(this, "editing item called", Toast.LENGTH_SHORT).show();
-        }
-        else if (code == PathItemFragment.CODE_ITEM_OPEN){
+        } else if (code == PathItemFragment.CODE_ITEM_OPEN) {
             String file = item.filePath;
             PathFileParser parser = new PathFileParser(this);
             parser.readPathFromFile(file);
-            if (parser.points.size() == 0){
+            if (parser.points.size() == 0) {
                 Toast.makeText(this, "Not found or empty path!", Toast.LENGTH_LONG).show();
                 return;
             }
             _transaction = getSupportFragmentManager().beginTransaction();
-            _mapFragment =  MapFragment.newInstance(parser.points, MapFragment.VIEW_MODE_PATH);
+            _mapFragment = MapFragment.newInstance(parser.points, MapFragment.VIEW_MODE_PATH);
             _transaction.replace(R.id.main_container, _mapFragment);
             _transaction.commit();
             Toast.makeText(this, "opening item called", Toast.LENGTH_SHORT).show();
@@ -190,16 +206,16 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onCreateFragmentInteraction(String name, String description, int result_code) {
         _transaction = getSupportFragmentManager().beginTransaction();
-        if (result_code == CreatePathFragment.RESULT_OK){
+        if (result_code == CreatePathFragment.RESULT_OK) {
             int id = database.getPathIdByFilename(_editTemp.filePath);
-            database.updateRowById(id,new PathDataContent.PathRecord(name, _editTemp.startDate, description, _editTemp.filePath));
-            _editTemp = null; _listFragment = null;
+            database.updateRowById(id, new PathDataContent.PathRecord(name, _editTemp.startDate, description, _editTemp.filePath));
+            _editTemp = null;
+            _listFragment = null;
             PathDataContent.getAllPaths(database);
             _listFragment = new PathItemFragment();
             _transaction.replace(R.id.main_container, _listFragment);
             _transaction.commit();
-        }
-        else if (result_code == CreatePathFragment.RESULT_CANCEL){
+        } else if (result_code == CreatePathFragment.RESULT_CANCEL) {
             _transaction.replace(R.id.main_container, _listFragment);
             _transaction.commit();
         }
@@ -209,11 +225,12 @@ public class MainActivity extends AppCompatActivity
     public void onFragmentInteraction(Uri uri) {
 
     }
+
     //region BluetoothConnector interface implemented here
     @Override
     public void onConnect(BluetoothSocket socket) {
         _settingsFragment.onConnect(socket);
-        if (serviceConnection.connected){
+        if (serviceConnection.connected) {
             serviceConnection.binder.setBtSocket(socket);
         }
     }
@@ -221,7 +238,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onDisconnect() {
         _settingsFragment.onDisconnect();
-        if (serviceConnection.connected){
+        if (serviceConnection.connected) {
             serviceConnection.binder.setBtSocket(null);
         }
     }
@@ -239,11 +256,31 @@ public class MainActivity extends AppCompatActivity
         //createpathfragment is called here and interaction continues
     }
 
+
+    public void enableBroadcast() {
+        byte[] buffer = PathTracker.newBuffer();
+        int msgSize = PathTracker.commandEnableBroadcast(buffer);
+        if (serviceConnection.connected) {
+            serviceConnection.binder.sendMessage(buffer, msgSize);
+        } else {
+            Log.w(LOG_TAG, "No connection with device");
+        }
+    }
+
+    public void disableBroadcast() {
+        byte[] buffer = PathTracker.newBuffer();
+        int msgSize = PathTracker.commandDisableBroadcast(buffer);
+        if (serviceConnection.connected) {
+            serviceConnection.binder.sendMessage(buffer, msgSize);
+        } else {
+            Log.w(LOG_TAG, "No connection with device");
+        }
+    }
+
     @Override
-    public void onGotoSettingsInteraction() {
-        _transaction = getSupportFragmentManager().beginTransaction();
-        _transaction.replace(R.id.main_container, _settingsFragment);
-        _transaction.commit();
+    public void stopBroadcast() {
+        disableBroadcast();
+        locationListener.stopListening();
     }
 
     @Override
@@ -252,4 +289,10 @@ public class MainActivity extends AppCompatActivity
         return null;
     }
 
+    @Override
+    public void callSettings() {
+        _transaction = getSupportFragmentManager().beginTransaction();
+        _transaction.replace(R.id.main_container, _settingsFragment);
+        _transaction.commit();
+    }
 }

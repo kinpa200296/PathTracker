@@ -24,7 +24,6 @@ public class AddPathFragment extends Fragment {
     public final static int CODE_FILE_DELETE = 3;
     public final static int CODE_FILE_ADD = 1;
 
-    public static int VIEW_MODE_NO_CONNECTION = 0;
     public static int VIEW_MODE_FILE_LIST = 2;
 
     private static final String ARG_MODE = "mode";
@@ -101,16 +100,6 @@ public class AddPathFragment extends Fragment {
 
 
         }
-
-        else if (view instanceof LinearLayout){
-            Button btnSettings = (Button) view.findViewById(R.id.goto_settings);
-            btnSettings.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.onGotoSettingsInteraction();
-                }
-            });
-        }
         return view;
     }
 
@@ -134,7 +123,6 @@ public class AddPathFragment extends Fragment {
 
     public interface OnAddPathInteractionListener {
         void onAddPathInteraction(int fileIndex, int interact_code);
-        void onGotoSettingsInteraction();
         List<String> getFiles();
     }
 }

@@ -38,4 +38,13 @@ public class BluetoothBinder extends Binder {
         }
         return false;
     }
+
+    public boolean isConnectedToDevice(){
+        if (_listener != null){
+            if (_listener.btSocket != null){
+                return _listener.btSocket.isConnected();
+            }
+        }
+        return false;
+    }
 }

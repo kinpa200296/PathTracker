@@ -20,10 +20,8 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.util.LinkedList;
 
 
-public class MapFragment extends SupportMapFragment implements OnMapReadyCallback{
+public class MapFragment extends SupportMapFragment implements OnMapReadyCallback {
 
-
-    public static int VIEW_MODE_NO_CONNECTION = 0;
     public static int VIEW_MODE_PATH = 1;
     public static int VIEW_MODE_LOCATION = 2;
 
@@ -46,16 +44,16 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     public static MapFragment newInstance(LinkedList<LatLng> dots, int mode) {
         Bundle args = new Bundle();
         args.putInt(ARG_MODE, mode);
-        if (mode != VIEW_MODE_NO_CONNECTION){
-            double[] lat = new double[dots.size()];
-            double[] lng = new double[dots.size()];
-            for (int i = 0; i<dots.size(); i++){
-                lat[i] = dots.get(i).latitude;
-                lng[i] = dots.get(i).longitude;
-            }
-            args.putDoubleArray(ARA_LATITUDE, lat);
-            args.putDoubleArray(ARG_LONGTITUDE, lng);
+
+        double[] lat = new double[dots.size()];
+        double[] lng = new double[dots.size()];
+        for (int i = 0; i < dots.size(); i++) {
+            lat[i] = dots.get(i).latitude;
+            lng[i] = dots.get(i).longitude;
         }
+        args.putDoubleArray(ARA_LATITUDE, lat);
+        args.putDoubleArray(ARG_LONGTITUDE, lng);
+
         MapFragment fragment = new MapFragment();
         fragment.setArguments(args);
         return fragment;
@@ -64,6 +62,14 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (_mode == VIEW_MODE_LOCATION) {
+            mListener.stopBroadcast();
+        }
     }
 
     @Override
@@ -88,27 +94,14 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Bundle bundle = getArguments();
         _mode = bundle.getInt(ARG_MODE);
-        if ( _mode != VIEW_MODE_NO_CONNECTION){
-            double[] lat = bundle.getDoubleArray("lats");
-            double[] lng = bundle.getDoubleArray("lngs");
-            pathOnMap = new LatLng[lat.length];
-            for (int i = 0; i<lat.length; i++){
-                LatLng temp = new LatLng(lat[i], lng[i]);
-                pathOnMap[i] = temp;
-            }
-            return super.onCreateView(inflater, container, savedInstanceState);
+        double[] lat = bundle.getDoubleArray("lats");
+        double[] lng = bundle.getDoubleArray("lngs");
+        pathOnMap = new LatLng[lat.length];
+        for (int i = 0; i < lat.length; i++) {
+            LatLng temp = new LatLng(lat[i], lng[i]);
+            pathOnMap[i] = temp;
         }
-        else {
-            View v = inflater.inflate(R.layout.fragment_no_device_connection_found, container, false);
-            Button btnSettings = (Button) v.findViewById(R.id.goto_settings);
-            btnSettings.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.onGotoSettingsInteraction();
-                }
-            });
-            return v;
-        }
+        return super.onCreateView(inflater, container, savedInstanceState);
     }
 
     @Override
@@ -122,13 +115,13 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
         mMap = googleMap;
         if (_mode == VIEW_MODE_PATH)
             DrawPathOnMap();
-        else if(_mode == VIEW_MODE_LOCATION)
+        else if (_mode == VIEW_MODE_LOCATION)
             if (pathOnMap.length == 0)
                 DrawLocation(null);
             else DrawLocation(pathOnMap[pathOnMap.length - 1]);
     }
 
-    private void DrawPathOnMap(){
+    private void DrawPathOnMap() {
         if (pathOnMap.length != 0) {
             mMap.addMarker(new MarkerOptions().position(pathOnMap[0]).title("Path starts here..."));
             mMap.addMarker(new MarkerOptions().position(pathOnMap[pathOnMap.length - 1]).title("And it\'s end is there"));
@@ -153,42 +146,42 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
             float zoom = getZoomLevel(bounds);
             Toast.makeText(getActivity(), String.valueOf(zoom), Toast.LENGTH_SHORT).show();
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(bounds.getCenter(), getZoomLevel(bounds)));
-        }
-        else Toast.makeText(getActivity(), "Oops! Looks like empty path found here...", Toast.LENGTH_LONG).show();
+        } else
+            Toast.makeText(getActivity(), "Oops! Looks like empty path found here...", Toast.LENGTH_LONG).show();
     }
 
-    private void DrawLocation(LatLng location){
+    private void DrawLocation(LatLng location) {
         if (location != null) {
             mMap.clear();
             mMap.addMarker(new MarkerOptions().position(location).title("Your estimated location"));
-        }
-        else Toast.makeText(getActivity(), "Can't find your location yet! Seems like a bad sigmal...", Toast.LENGTH_LONG).show();
+        } else
+            Toast.makeText(getActivity(), "Can't find your location yet! Seems like a bad sigmal...", Toast.LENGTH_LONG).show();
     }
 
-    public float getZoomLevel(LatLngBounds bounds){
+    public float getZoomLevel(LatLngBounds bounds) {
         LatLng ne = bounds.northeast;
         LatLng sw = bounds.southwest;
 
-        double latFraction = (latRad(ne.latitude)- latRad(sw.latitude))/Math.PI;
+        double latFraction = (latRad(ne.latitude) - latRad(sw.latitude)) / Math.PI;
 
         double lngDiff = ne.longitude - sw.longitude;
-        double lngFraction = ((lngDiff < 0)? (lngDiff + 360): lngDiff)/360;
-        float latZoom = (float)zoom( WORLD_DIM, latFraction);
-        float lngZoom = (float)zoom( WORLD_DIM, lngFraction);
+        double lngFraction = ((lngDiff < 0) ? (lngDiff + 360) : lngDiff) / 360;
+        float latZoom = (float) zoom(WORLD_DIM, latFraction);
+        float lngZoom = (float) zoom(WORLD_DIM, lngFraction);
         return Math.min(Math.min(latZoom, lngZoom), ZOOM_MAX);
     }
 
-    private double latRad(double lat){
-        double sin = Math.sin(lat*Math.PI/180);
-        double radX2 = Math.log((1+sin)/(1-sin))/2;
-        return Math.max(Math.min(radX2, Math.PI), -Math.PI)/2;
+    private double latRad(double lat) {
+        double sin = Math.sin(lat * Math.PI / 180);
+        double radX2 = Math.log((1 + sin) / (1 - sin)) / 2;
+        return Math.max(Math.min(radX2, Math.PI), -Math.PI) / 2;
     }
 
-    private double zoom( double worldPx, double fraction){
-        return Math.floor(Math.log(256/worldPx/fraction)/Math.log(2));
+    private double zoom(double worldPx, double fraction) {
+        return Math.floor(Math.log(256 / worldPx / fraction) / Math.log(2));
     }
 
     public interface OnFragmentInteractionListener {
-        void onGotoSettingsInteraction();
+        void stopBroadcast();
     }
 }

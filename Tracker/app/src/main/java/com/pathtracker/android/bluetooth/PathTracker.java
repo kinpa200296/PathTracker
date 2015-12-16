@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class PathTracker {
     static {
-        System.loadLibrary("PathTracker");
+        System.loadLibrary("GpsTracker");
     }
 
     public static final int MESSAGE_BUFFER_LENGTH = 100;
@@ -114,6 +114,10 @@ public class PathTracker {
         byte[] res = new byte[_bufferPos];
         System.arraycopy(_buffer, 0, res, 0, _bufferPos);
         return res;
+    }
+
+    public int getMessageSize(){
+        return _bufferPos;
     }
 
     public State parseState(){

@@ -2,7 +2,7 @@ package com.pathtracker.android.bluetooth;
 
 public class GpsData {
     static {
-        System.loadLibrary("GpsData");
+        System.loadLibrary("GpsTracker");
     }
 
     private native boolean parseData(byte[] bytes);

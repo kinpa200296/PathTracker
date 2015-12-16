@@ -34,7 +34,7 @@ public class AddPathRecyclerViewAdapter extends RecyclerView.Adapter<AddPathRecy
             @Override
             public void onClick(View v) {
                 if (null != mListener) {
-                    mListener.onAddPathInteraction(holder.getLayoutPosition(), AddPathFragment.CODE_FILE_ADD);
+                    mListener.onAddPathInteraction(holder.getAdapterPosition(), AddPathFragment.CODE_FILE_ADD);
                 }
             }
         });
