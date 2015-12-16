@@ -6,6 +6,7 @@ PathTracker::PathTracker() {
     _buffer = (byte*) malloc(MESSAGE_BUFFER);
     _bufferPos = 0;
     _buffer[_bufferPos] = 0;
+    _readMsgSize = false;
     _broadcastEnabled = false;
 }
 
@@ -22,20 +23,27 @@ byte PathTracker::getCommand() {
 }
 
 bool PathTracker::analyze(byte b) {
-    if (b != MESSAGE_END) {
-        if (_currentCommand == COMMAND_NO_COMMAND) {
-            _bufferPos = 0;
-            _buffer[_bufferPos] = 0;
-            _currentCommand = b;
-        }
-        else if (_bufferPos < MESSAGE_BUFFER) {
-            _buffer[_bufferPos] = b;
-            _bufferPos++;
-            _buffer[_bufferPos] = 0;
-        }
-        return false;
+    if (_currentCommand == COMMAND_NO_COMMAND) {
+        _bufferPos = 0;
+        _buffer[_bufferPos] = 0;
+        _currentCommand = b;
+        _readMsgSize = true;
     }
-    return true;
+    else {
+        if (_readMsgSize){
+            _currentMsgSize = b > MESSAGE_BUFFER - 1 ? MESSAGE_BUFFER - 1 : b;
+            _readMsgSize = false;
+        }
+        else if (_bufferPos < _currentMsgSize) {
+                _buffer[_bufferPos] = b;
+                _bufferPos++;
+                _buffer[_bufferPos] = 0;
+            }
+        if (_bufferPos == _currentMsgSize){           
+            return true;
+        }
+    }
+    return false;
 }
 
 void PathTracker::resetCommand() {

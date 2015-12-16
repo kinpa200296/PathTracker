@@ -120,17 +120,16 @@ void readCommand(){
 }
 
 void response(byte result, const char* msg){
+  byte msgSize = strlen(msg);
   Serial.write(result);
+  Serial.write(msgSize);
   Serial.print(msg);
-  Serial.write(MESSAGE_END);
-  //Serial.println();
 }
 
-void response(byte result, const byte* msg, int msgSize){
+void response(byte result, const byte* msg, byte msgSize){
   Serial.write(result);
+  Serial.write(msgSize);
   Serial.write(msg, msgSize);
-  Serial.write(MESSAGE_END);
-  //Serial.println();
 }
 
 void processCommand(){
