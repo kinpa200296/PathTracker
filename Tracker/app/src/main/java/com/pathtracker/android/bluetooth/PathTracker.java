@@ -52,8 +52,6 @@ public class PathTracker {
 
     public static native int commandGetState(byte[] buffer);
 
-    private native boolean isMessageEnd(byte b);
-
     private native String bytesToString(byte[] bytes);
 
     private byte[] _buffer;
@@ -79,11 +77,11 @@ public class PathTracker {
             _buffer[_bufferPos] = 0;
             _readMsgSize = true;
             _parseResult(b);
-        } else if (_readMsgSize) {
-            _currentMsgSize = b > _buffer.length - 1 ? _buffer.length - 1 : b;
-            _readMsgSize = false;
         } else {
-            if (_bufferPos < _currentMsgSize) {
+            if (_readMsgSize) {
+                _currentMsgSize = b > _buffer.length - 1 ? _buffer.length - 1 : b;
+                _readMsgSize = false;
+            } else if (_bufferPos < _currentMsgSize) {
                 _buffer[_bufferPos] = b;
                 _bufferPos++;
                 _buffer[_bufferPos] = 0;
@@ -94,6 +92,7 @@ public class PathTracker {
                 return true;
             }
         }
+
         return false;
     }
 

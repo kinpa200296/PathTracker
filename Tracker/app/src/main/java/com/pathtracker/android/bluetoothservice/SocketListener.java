@@ -10,6 +10,8 @@ import java.io.InputStream;
 
 public class SocketListener implements Runnable {
 
+    public static final String LOG_TAG = "SocketListener";
+
     BluetoothSocket btSocket;
     PathTracker tracker;
     boolean stop;
@@ -22,17 +24,15 @@ public class SocketListener implements Runnable {
     public void run() {
         while (!stop) {
             if (btSocket != null && tracker != null) {
-                if (btSocket.isConnected()) {
-                    try {
-                        InputStream stream = btSocket.getInputStream();
-                        int b = stream.read();
-                        while (b != -1) {
-                            tracker.analyze((byte) b);
-                            b = stream.read();
-                        }
-                    } catch (IOException e) {
-                        Log.w(BluetoothService.LOG_TAG, e.getMessage());
+                try {
+                    InputStream stream = btSocket.getInputStream();
+                    int b = stream.read();
+                    while (b != -1) {
+                        tracker.analyze((byte) b);
+                        b = stream.read();
                     }
+                } catch (IOException e) {
+                    Log.w(LOG_TAG, e.getMessage());
                 }
             }
         }

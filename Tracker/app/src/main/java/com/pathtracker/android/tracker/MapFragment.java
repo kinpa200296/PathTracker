@@ -5,9 +5,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -32,10 +32,12 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     private OnFragmentInteractionListener mListener;
     private static double WORLD_DIM = 256;
     private static float ZOOM_MAX = 18;
+    private boolean _notConnected = false;
+    private float _locationZoom = 15;
 
     private static final String ARG_MODE = "mode";
-    private static final String ARA_LATITUDE = "lats";
-    private static final String ARG_LONGTITUDE = "lngs";
+    private static final String ARG_LATITUDE = "lats";
+    private static final String ARG_LONGITUDE = "longs";
 
     public MapFragment() {
         // Required empty public constructor
@@ -45,14 +47,16 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
         Bundle args = new Bundle();
         args.putInt(ARG_MODE, mode);
 
-        double[] lat = new double[dots.size()];
-        double[] lng = new double[dots.size()];
-        for (int i = 0; i < dots.size(); i++) {
-            lat[i] = dots.get(i).latitude;
-            lng[i] = dots.get(i).longitude;
+        if (dots != null) {
+            double[] lat = new double[dots.size()];
+            double[] lng = new double[dots.size()];
+            for (int i = 0; i < dots.size(); i++) {
+                lat[i] = dots.get(i).latitude;
+                lng[i] = dots.get(i).longitude;
+            }
+            args.putDoubleArray(ARG_LATITUDE, lat);
+            args.putDoubleArray(ARG_LONGITUDE, lng);
         }
-        args.putDoubleArray(ARA_LATITUDE, lat);
-        args.putDoubleArray(ARG_LONGTITUDE, lng);
 
         MapFragment fragment = new MapFragment();
         fragment.setArguments(args);
@@ -94,12 +98,16 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Bundle bundle = getArguments();
         _mode = bundle.getInt(ARG_MODE);
-        double[] lat = bundle.getDoubleArray("lats");
-        double[] lng = bundle.getDoubleArray("lngs");
-        pathOnMap = new LatLng[lat.length];
-        for (int i = 0; i < lat.length; i++) {
-            LatLng temp = new LatLng(lat[i], lng[i]);
-            pathOnMap[i] = temp;
+        if (bundle.containsKey(ARG_LATITUDE) && bundle.containsKey(ARG_LONGITUDE)) {
+            double[] lat = bundle.getDoubleArray(ARG_LATITUDE);
+            double[] lng = bundle.getDoubleArray(ARG_LONGITUDE);
+            pathOnMap = new LatLng[lat.length];
+            for (int i = 0; i < lat.length; i++) {
+                LatLng temp = new LatLng(lat[i], lng[i]);
+                pathOnMap[i] = temp;
+            }
+        } else {
+            pathOnMap = new LatLng[]{};
         }
         return super.onCreateView(inflater, container, savedInstanceState);
     }
@@ -115,10 +123,12 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
         mMap = googleMap;
         if (_mode == VIEW_MODE_PATH)
             DrawPathOnMap();
-        else if (_mode == VIEW_MODE_LOCATION)
+        else if (_mode == VIEW_MODE_LOCATION) {
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(_locationZoom));
             if (pathOnMap.length == 0)
                 DrawLocation(null);
             else DrawLocation(pathOnMap[pathOnMap.length - 1]);
+        }
     }
 
     private void DrawPathOnMap() {
@@ -129,7 +139,6 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
             options.add(pathOnMap);
             options.color(0xFFFF0000);
             mMap.addPolyline(options);
-            //mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
             double maxLat = pathOnMap[0].latitude, minLat = pathOnMap[0].latitude,
                     maxLng = pathOnMap[0].longitude, minLng = pathOnMap[0].longitude;
             if (pathOnMap.length > 1)
@@ -150,12 +159,19 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
             Toast.makeText(getActivity(), "Oops! Looks like empty path found here...", Toast.LENGTH_LONG).show();
     }
 
-    private void DrawLocation(LatLng location) {
+    public void DrawLocation(LatLng location) {
         if (location != null) {
+            _notConnected = false;
+            if (mMap.getCameraPosition() != null) {
+                _locationZoom = mMap.getCameraPosition().zoom;
+            }
             mMap.clear();
             mMap.addMarker(new MarkerOptions().position(location).title("Your estimated location"));
-        } else
-            Toast.makeText(getActivity(), "Can't find your location yet! Seems like a bad sigmal...", Toast.LENGTH_LONG).show();
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, _locationZoom));
+        } else if (!_notConnected) {
+            Toast.makeText(getActivity(), "Can't find your location yet! Seems like a bad signal...", Toast.LENGTH_LONG).show();
+            _notConnected = true;
+        }
     }
 
     public float getZoomLevel(LatLngBounds bounds) {

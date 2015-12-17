@@ -2,6 +2,7 @@ package com.pathtracker.android.tracker;
 
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
@@ -34,16 +35,21 @@ public class MainActivity extends AppCompatActivity
         DeviceComFragment.OnFragmentInteractionListener, CreatePathFragment.OnFragmentInteractionListener,
         BluetoothConnector.BluetoothConnectorListener, NoConnectionFragment.onNoConnection {
 
-    private Fragment _mapFragment, _listFragment, _addFragment, _deviceFragment, _noConnetionFragment;
+    private Fragment _listFragment, _addFragment, _deviceFragment, _noConnetionFragment;
     private CreatePathFragment _createFragment;
     private SettingsFragment _settingsFragment;
     private PathDataContent.PathRecord _editTemp;
     private FragmentTransaction _transaction;
 
+    MapFragment mapFragment;
+
+    BluetoothConnector connector;
     PathTracker tracker;
     Intent serviceIntent;
     BluetoothServiceConnection serviceConnection;
     ViewLocationListener locationListener;
+
+    LocationUpdateReceiver locationUpdateReceiver;
 
     public PathDatabase database;
     public static final String LOG_TAG = "PathTracker";
@@ -54,6 +60,9 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        connector = new BluetoothConnector(getString(R.string.mac_address), this);
+        connector.registerReceivers();
 
         tracker = new PathTracker();
         serviceIntent = new Intent(this, BluetoothService.class);
@@ -100,11 +109,17 @@ public class MainActivity extends AppCompatActivity
         _transaction = getSupportFragmentManager().beginTransaction();
         _transaction.replace(R.id.main_container, _listFragment);
         _transaction.commit();
+
+        locationUpdateReceiver = new LocationUpdateReceiver();
+        IntentFilter filter = new IntentFilter(LocationUpdateReceiver.BROADCAST_ACTION);
+        registerReceiver(locationUpdateReceiver, filter);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        connector.unregisterReceivers();
+        unregisterReceiver(locationUpdateReceiver);
         stopService(serviceIntent);
     }
 
@@ -142,19 +157,26 @@ public class MainActivity extends AppCompatActivity
             _transaction.replace(R.id.main_container, _listFragment);
         } else if (id == R.id.nav_all_path_map) {
             //check connection and show map with your current location, else show no_device_connection xml
+            if (mapFragment != null) {
+                _transaction.remove(mapFragment);
+            }
             if (serviceConnection.binder.isConnectedToDevice()) {
                 locationListener.startListening();
                 enableBroadcast();
                 try {
-                    Thread.sleep(1500);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                LinkedList<LatLng> list = new LinkedList<>();
-                list.add(locationListener.getCurrentLocation());
-                _mapFragment = MapFragment.newInstance(list, MapFragment.VIEW_MODE_LOCATION);
-                _transaction.replace(R.id.main_container, _mapFragment);
-            }else {
+                if (locationListener.getCurrentLocation() != null) {
+                    LinkedList<LatLng> list = new LinkedList<>();
+                    list.add(locationListener.getCurrentLocation());
+                    mapFragment = MapFragment.newInstance(list, MapFragment.VIEW_MODE_LOCATION);
+                } else {
+                    mapFragment = MapFragment.newInstance(null, MapFragment.VIEW_MODE_LOCATION);
+                }
+                _transaction.replace(R.id.main_container, mapFragment);
+            } else {
                 _transaction.replace(R.id.main_container, _noConnetionFragment);
             }
         } else if (id == R.id.nav_settings) {
@@ -195,8 +217,8 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
             _transaction = getSupportFragmentManager().beginTransaction();
-            _mapFragment = MapFragment.newInstance(parser.points, MapFragment.VIEW_MODE_PATH);
-            _transaction.replace(R.id.main_container, _mapFragment);
+            mapFragment = MapFragment.newInstance(parser.points, MapFragment.VIEW_MODE_PATH);
+            _transaction.replace(R.id.main_container, mapFragment);
             _transaction.commit();
             Toast.makeText(this, "opening item called", Toast.LENGTH_SHORT).show();
         }
@@ -229,7 +251,7 @@ public class MainActivity extends AppCompatActivity
     //region BluetoothConnector interface implemented here
     @Override
     public void onConnect(BluetoothSocket socket) {
-        _settingsFragment.onConnect(socket);
+        _settingsFragment.onConnect();
         if (serviceConnection.connected) {
             serviceConnection.binder.setBtSocket(socket);
         }

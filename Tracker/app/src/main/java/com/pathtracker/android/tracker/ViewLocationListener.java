@@ -1,5 +1,7 @@
 package com.pathtracker.android.tracker;
 
+import android.content.Intent;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.pathtracker.android.bluetooth.GpsData;
 import com.pathtracker.android.bluetooth.PathTracker;
@@ -15,7 +17,7 @@ public class ViewLocationListener implements PathTrackerResultListener {
 
     public ViewLocationListener(MainActivity activity) {
         _activity = activity;
-        _currentLocation = new LatLng(999, 999);
+        _currentLocation = null;
         _signalAvailable = false;
         _listening = false;
     }
@@ -55,6 +57,10 @@ public class ViewLocationListener implements PathTrackerResultListener {
                 double latitude = data.getLatitudeDegrees() + 1.0 / 60.0 * data.getLatitudeMinutes();
                 double longitude = data.getLongitudeDegrees() + 1.0 / 60.0 * data.getLongitudeMinutes();
                 _currentLocation = new LatLng(latitude, longitude);
+                if (_listening && _signalAvailable){
+                    Intent broadcastIntent = new Intent(LocationUpdateReceiver.BROADCAST_ACTION);
+                    _activity.sendBroadcast(broadcastIntent);
+                }
             }
         }
     }
