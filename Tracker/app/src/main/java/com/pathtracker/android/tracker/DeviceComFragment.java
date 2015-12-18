@@ -1,18 +1,25 @@
 package com.pathtracker.android.tracker;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
 
+public class DeviceComFragment extends Fragment implements View.OnClickListener {
 
-public class DeviceComFragment extends Fragment {
+    public static final byte STATUS_START = 1;
+    public static final byte STATUS_STOP = 3;
+    public static final byte STATUS_PAUSE = 2;
 
-    private OnFragmentInteractionListener mListener;
+    Button btnStart, btnPause, btnStop;
+    TextView tvStatus;
+
+    private OnDeviceCommunicationListener mListener;
 
     public DeviceComFragment() {
         // Required empty public constructor
@@ -23,19 +30,32 @@ public class DeviceComFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_device_com, container, false);
+        View view = inflater.inflate(R.layout.fragment_device_com, container, false);
+        btnStart = (Button) view.findViewById(R.id.start_new_path);
+        btnStart.setOnClickListener(this);
+        btnPause = (Button) view.findViewById(R.id.pause_path);
+        btnPause.setOnClickListener(this);
+        btnStop = (Button) view.findViewById(R.id.stop_path);
+        btnStop.setOnClickListener(this);
+        tvStatus = (TextView) view.findViewById(R.id.path_status);
+        updateStatus();
+        return view;
     }
 
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
+        if (context instanceof OnDeviceCommunicationListener) {
+            mListener = (OnDeviceCommunicationListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+                    + " must implement OnDeviceCommunicationListener");
         }
+    }
+
+    private void updateStatus(){
+        //button and tv update methods are held here
     }
 
     @Override
@@ -44,9 +64,22 @@ public class DeviceComFragment extends Fragment {
         mListener = null;
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.start_new_path:
+                mListener.onPathStatusChange(STATUS_START);
+                break;
+            case R.id.pause_path:
+                mListener.onPathStatusChange(STATUS_PAUSE);
+                break;
+            case R.id.stop_path:
+                mListener.onPathStatusChange(STATUS_STOP);
+        }
+    }
 
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
+
+    public interface OnDeviceCommunicationListener {
+        void onPathStatusChange(byte new_status);
     }
 }
