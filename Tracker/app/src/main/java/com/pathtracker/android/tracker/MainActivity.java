@@ -1,5 +1,6 @@
 package com.pathtracker.android.tracker;
 
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity
 
     private int _uploadFileIndex;
     private String _uploadName, _uploadDescription;
+    private ProgressDialog _uploadProgressDialog;
 
     MapFragment mapFragment;
 
@@ -257,7 +259,11 @@ public class MainActivity extends AppCompatActivity
                 pathLoadingListener = new PathLoadingListener(this, filename);
                 pathLoadingListener.startListening();
                 requestPath();
-
+                _uploadProgressDialog = new ProgressDialog(this);
+                _uploadProgressDialog.setIndeterminate(true);
+                _uploadProgressDialog.setTitle(R.string.loading);
+                _uploadProgressDialog.setMessage(getString(R.string.selection) + _uploadFileIndex);
+                _uploadProgressDialog.show();
             }
         } else if (result_code == CreatePathFragment.RESULT_CANCEL) {
             _transaction = getSupportFragmentManager().beginTransaction();
@@ -285,12 +291,12 @@ public class MainActivity extends AppCompatActivity
         String filename = pathLoadingListener.getFilename();
         String startDate = pathLoadingListener.getStartDate();
         database.addPath(_uploadName, _uploadDescription, startDate, filename);
+        _uploadProgressDialog.dismiss();
         Toast.makeText(this, intent.getStringExtra(PathLoadingListener.ARG_RESULT_MESSAGE), Toast.LENGTH_SHORT).show();
         PathDataContent.getAllPaths(database);
         _transaction = getSupportFragmentManager().beginTransaction();
         _transaction.replace(R.id.main_container, _listFragment);
         _transaction.commit();
-        //display smth what is next
     }
 
     @Override

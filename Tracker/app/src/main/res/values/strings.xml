@@ -41,4 +41,7 @@
     <!--no device connection string-->
     <string name="no_connection">Sorry, your tracker is not connected</string>
     <string name="goto_settings">Press here to try to connect</string>
+
+    <string name="loading">Downloading path</string>
+    <string name="selection">You selected path #</string>
 </resources>
