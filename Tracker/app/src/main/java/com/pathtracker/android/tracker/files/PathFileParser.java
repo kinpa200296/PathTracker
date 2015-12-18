@@ -41,14 +41,16 @@ public class PathFileParser {
                 data = GpsData.fromBytes(buffer);
                 res.add(data.getLatLng());
             }
-            stream.read(buffer, 0, GpsData.SIZE);
-            data = GpsData.fromBytes(buffer);
-            res.add(data.getLatLng());
-            finishDate = data.getDate();
-            finishTime = data.getTime();
-            if (startDate == 0 && startTime == 0) {
-                startDate = finishDate;
-                startTime = finishTime;
+            int temp = stream.read(buffer, 0, GpsData.SIZE);
+            if (temp == GpsData.SIZE) {
+                data = GpsData.fromBytes(buffer);
+                res.add(data.getLatLng());
+                finishDate = data.getDate();
+                finishTime = data.getTime();
+                if (startDate == 0 && startTime == 0) {
+                    startDate = finishDate;
+                    startTime = finishTime;
+                }
             }
             stream.close();
         } catch (FileNotFoundException e) {

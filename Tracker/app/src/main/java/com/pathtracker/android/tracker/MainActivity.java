@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -20,6 +19,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.pathtracker.android.bluetooth.PathTracker;
+import com.pathtracker.android.bluetooth.Result;
 import com.pathtracker.android.bluetoothservice.BluetoothConnector;
 import com.pathtracker.android.bluetoothservice.BluetoothService;
 import com.pathtracker.android.tracker.database.PathDataContent;
@@ -35,7 +35,7 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MapFragment.OnFragmentInteractionListener,
         PathItemFragment.OnListFragmentInteractionListener, AddPathFragment.OnAddPathInteractionListener,
-        DeviceComFragment.OnFragmentInteractionListener, CreatePathFragment.OnFragmentInteractionListener,
+        DeviceComFragment.OnDeviceCommunicationListener, CreatePathFragment.OnFragmentInteractionListener,
         BluetoothConnector.BluetoothConnectorListener, NoConnectionFragment.onNoConnection {
 
     private Fragment _listFragment, _addFragment, _deviceFragment, _noConnetionFragment;
@@ -189,7 +189,11 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_settings) {
             _transaction.replace(R.id.main_container, _settingsFragment);
         } else if (id == R.id.nav_device) {
-            _transaction.replace(R.id.main_container, _deviceFragment);
+            if (serviceConnection.binder.isConnectedToDevice()) {
+                _transaction.replace(R.id.main_container, _deviceFragment);
+            } else {
+                _transaction.replace(R.id.main_container, _noConnetionFragment);
+            }
         }
 
         _transaction.commit();
@@ -299,11 +303,6 @@ public class MainActivity extends AppCompatActivity
         _transaction.commit();
     }
 
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-
-    }
-
     //region BluetoothConnector interface implemented here
     @Override
     public void onConnect(BluetoothSocket socket) {
@@ -330,13 +329,35 @@ public class MainActivity extends AppCompatActivity
     //region AddPath interface implemented here
     @Override
     public void onAddPathInteraction(int fileIndex, int interact_code) {
-        _transaction = getSupportFragmentManager().beginTransaction();
-        _createFragment = CreatePathFragment.newInstance(null, null, (byte) interact_code);
-        _uploadFileIndex = fileIndex;
-        _transaction.replace(R.id.main_container, _createFragment);
-        _transaction.commit();
+        if (interact_code == AddPathFragment.CODE_FILE_ADD) {
+            _transaction = getSupportFragmentManager().beginTransaction();
+            _createFragment = CreatePathFragment.newInstance(null, null, (byte) interact_code);
+            _uploadFileIndex = fileIndex;
+            _transaction.replace(R.id.main_container, _createFragment);
+            _transaction.commit();
+        } else if (interact_code == AddPathFragment.CODE_FILE_DELETE) {
+            DeletePathListener listener = new DeletePathListener(Result.PathDeleted);
+            listener.startListening(tracker);
+            deletePath(fileIndex);
+            for (; !listener.isDone() && connector.isDeviceConnected(); ) ;
+            listener.stopListening(tracker);
+            if (!listener.isOk()) {
+                Toast.makeText(this, listener.getMessage(), Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(this, "path deleted", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
+    public void deletePath(int index) {
+        byte[] buffer = PathTracker.newBuffer();
+        int msgSize = PathTracker.commandDeletePath(buffer, "" + index);
+        if (serviceConnection.connected) {
+            serviceConnection.binder.sendMessage(buffer, msgSize);
+        } else {
+            Log.w(LOG_TAG, "No connection with device");
+        }
+    }
 
     public void enableBroadcast() {
         byte[] buffer = PathTracker.newBuffer();
@@ -380,7 +401,7 @@ public class MainActivity extends AppCompatActivity
         PathsListListener pathsListListener = new PathsListListener(paths);
         pathsListListener.startListening(tracker);
         requestPathsList();
-        for (; !pathsListListener.isDone(); ) ;
+        for (; !pathsListListener.isDone() && connector.isDeviceConnected(); ) ;
         pathsListListener.stopListening(tracker);
         return paths;
     }
@@ -390,5 +411,85 @@ public class MainActivity extends AppCompatActivity
         _transaction = getSupportFragmentManager().beginTransaction();
         _transaction.replace(R.id.main_container, _settingsFragment);
         _transaction.commit();
+    }
+
+    @Override
+    public boolean onPathStatusChange(byte new_status, String tag) {
+        if (!connector.isDeviceConnected()) {
+            Toast.makeText(this, "Device not connected", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        PathStatusChangeListener listener;
+        switch (new_status) {
+            case DeviceComFragment.STATUS_PAUSE:
+                listener = new PathStatusChangeListener(Result.PathPaused);
+                listener.startListening(tracker);
+                pausePath();
+                break;
+            case DeviceComFragment.STATUS_RESUME:
+                listener = new PathStatusChangeListener(Result.PathResumed);
+                listener.startListening(tracker);
+                resumePath();
+                break;
+            case DeviceComFragment.STATUS_START:
+                listener = new PathStatusChangeListener(Result.PathAdded);
+                listener.startListening(tracker);
+                startPath(tag);
+                break;
+            case DeviceComFragment.STATUS_STOP:
+                listener = new PathStatusChangeListener(Result.PathStopped);
+                listener.startListening(tracker);
+                stopPath();
+                break;
+            default:
+                return false;
+        }
+        for (; !listener.isDone() && connector.isDeviceConnected(); ) ;
+        listener.stopListening(tracker);
+        if (!listener.isOk()) {
+            Toast.makeText(this, listener.getMessage(), Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    public void startPath(String tag) {
+        byte[] buffer = PathTracker.newBuffer();
+        int msgSize = PathTracker.commandNewPath(buffer, tag);
+        if (serviceConnection.connected) {
+            serviceConnection.binder.sendMessage(buffer, msgSize);
+        } else {
+            Log.w(LOG_TAG, "No connection with device");
+        }
+    }
+
+    public void pausePath() {
+        byte[] buffer = PathTracker.newBuffer();
+        int msgSize = PathTracker.commandPausePath(buffer);
+        if (serviceConnection.connected) {
+            serviceConnection.binder.sendMessage(buffer, msgSize);
+        } else {
+            Log.w(LOG_TAG, "No connection with device");
+        }
+    }
+
+    public void resumePath() {
+        byte[] buffer = PathTracker.newBuffer();
+        int msgSize = PathTracker.commandResumePath(buffer);
+        if (serviceConnection.connected) {
+            serviceConnection.binder.sendMessage(buffer, msgSize);
+        } else {
+            Log.w(LOG_TAG, "No connection with device");
+        }
+    }
+
+    public void stopPath() {
+        byte[] buffer = PathTracker.newBuffer();
+        int msgSize = PathTracker.commandStopPath(buffer);
+        if (serviceConnection.connected) {
+            serviceConnection.binder.sendMessage(buffer, msgSize);
+        } else {
+            Log.w(LOG_TAG, "No connection with device");
+        }
     }
 }

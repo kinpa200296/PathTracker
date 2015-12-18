@@ -42,18 +42,17 @@
     <string name="no_connection">Sorry, your tracker is not connected</string>
     <string name="goto_settings">Press here to try to connect</string>
 
-<<<<<<< Updated upstream
     <string name="loading">Downloading path</string>
     <string name="selection">You selected path #</string>
-=======
+
     <!--strings for device management-->
     <string name="start_write_path">Create new path</string>
     <string name="pause_write_path">Pause path writing</string>
     <string name="resume_write_path">Resume path writing</string>
     <string name="stop_write_path">Path is ended</string>
     <string name="status_hint">Tap \"Create new path\" now!</string>
-    <string name="status_writing">Tracking path with file name </string>
-    <string name="status_paused">Paused path with file name </string>
+    <string name="status_writing">Tracking path with tag</string>
+    <string name="status_paused">Paused path with tag</string>
+    <string name="create_tag_hint">Your path\'s tag:</string>
 
->>>>>>> Stashed changes
 </resources>
