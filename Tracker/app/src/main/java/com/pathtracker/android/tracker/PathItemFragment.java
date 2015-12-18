@@ -31,6 +31,7 @@ public class PathItemFragment extends Fragment {
 
     public PathItemFragment() {
     }
+
     //TODO:may be deleted in final ver.
     public static PathItemFragment newInstance(int columnCount) {
         PathItemFragment fragment = new PathItemFragment();
@@ -62,7 +63,7 @@ public class PathItemFragment extends Fragment {
             final PathItemRecyclerViewAdapter adapter = new PathItemRecyclerViewAdapter(PathDataContent.records, mListener);
             recyclerView.setAdapter(adapter);
 
-            ItemTouchHelper.SimpleCallback scb = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT|ItemTouchHelper.RIGHT) {
+            ItemTouchHelper.SimpleCallback scb = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
                 @Override
                 public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
                     return false;
@@ -70,11 +71,10 @@ public class PathItemFragment extends Fragment {
 
                 @Override
                 public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-                    if (direction == ItemTouchHelper.LEFT){
+                    if (direction == ItemTouchHelper.LEFT) {
                         PathItemRecyclerViewAdapter.ViewHolder pathHolder = (PathItemRecyclerViewAdapter.ViewHolder) viewHolder;
                         mListener.onListFragmentInteraction(pathHolder.mPathRecord, CODE_ITEM_EDIT);
-                    }
-                    else if (direction == ItemTouchHelper.RIGHT){
+                    } else if (direction == ItemTouchHelper.RIGHT) {
                         adapter.removeItem(viewHolder.getAdapterPosition());
                         PathItemRecyclerViewAdapter.ViewHolder pathHolder = (PathItemRecyclerViewAdapter.ViewHolder) viewHolder;
                         mListener.onListFragmentInteraction(pathHolder.mPathRecord, CODE_ITEM_DELETE);
@@ -87,25 +87,25 @@ public class PathItemFragment extends Fragment {
                     View itemView = viewHolder.itemView;
                     Paint paint = new Paint();
                     paint.setColor(Color.RED);
-                    if (dX >0)
-                        c.drawRect(itemView.getLeft(), itemView.getTop(), itemView.getRight(), itemView.getBottom(),paint);
-                    else  if (dX<0){
+                    if (dX > 0)
+                        c.drawRect(itemView.getLeft(), itemView.getTop(), itemView.getRight(), itemView.getBottom(), paint);
+                    else if (dX < 0) {
                         paint.setColor(Color.YELLOW);
-                        c.drawRect(itemView.getLeft(), itemView.getTop(), itemView.getRight(), itemView.getBottom(),paint);
+                        c.drawRect(itemView.getLeft(), itemView.getTop(), itemView.getRight(), itemView.getBottom(), paint);
                     }
                     Drawable d = ContextCompat.getDrawable(getActivity(), R.drawable.ic_menu_remove);
                     if (dX < 0)
-                        d.setBounds(itemView.getLeft(), itemView.getTop(), 0 , itemView.getBottom());
+                        d.setBounds(itemView.getLeft(), itemView.getTop(), 0, itemView.getBottom());
                     else
-                        d.setBounds(itemView.getLeft(), itemView.getTop(), 180, itemView.getBottom());
+                        d.setBounds(itemView.getLeft(), itemView.getTop(), itemView.getBottom() - itemView.getTop(), itemView.getBottom());
                     Drawable d1 = ContextCompat.getDrawable(getActivity(), R.drawable.ic_menu_edit);
                     if (dX > 0)
                         d1.setBounds(itemView.getWidth(), itemView.getTop(), itemView.getRight(), itemView.getBottom());
-                    else d1.setBounds(itemView.getWidth() - 180, itemView.getTop(), itemView.getRight(), itemView.getBottom());
-                    if (dX < 0){
+                    else
+                        d1.setBounds(itemView.getWidth() - (itemView.getBottom() - itemView.getTop()), itemView.getTop(), itemView.getRight(), itemView.getBottom());
+                    if (dX < 0) {
                         d1.draw(c);
-                    }
-                    else{
+                    } else {
                         d.draw(c);
                     }
                     super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);

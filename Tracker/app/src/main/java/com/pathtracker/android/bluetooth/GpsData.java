@@ -1,5 +1,7 @@
 package com.pathtracker.android.bluetooth;
 
+import com.google.android.gms.maps.model.LatLng;
+
 public class GpsData {
     static {
         System.loadLibrary("GpsTracker");
@@ -15,6 +17,8 @@ public class GpsData {
     private GpsData(){
 
     }
+
+    public static final int SIZE = 18;
 
     public static GpsData fromBytes(byte[] bytes){
         GpsData res = new GpsData();
@@ -48,5 +52,11 @@ public class GpsData {
 
     public boolean isActive() {
         return _active;
+    }
+
+    public LatLng getLatLng(){
+        double latitude = getLatitudeDegrees() + 1.0 / 60.0 * getLatitudeMinutes();
+        double longitude = getLongitudeDegrees() + 1.0 / 60.0 * getLongitudeMinutes();
+        return new LatLng(latitude, longitude);
     }
 }

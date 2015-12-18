@@ -23,12 +23,13 @@ import com.pathtracker.android.bluetoothservice.BluetoothConnector;
 import com.pathtracker.android.bluetoothservice.BluetoothService;
 import com.pathtracker.android.tracker.database.PathDataContent;
 import com.pathtracker.android.tracker.database.PathDatabase;
-import com.pathtracker.android.tracker.dummy.DummyContent;
 import com.pathtracker.android.tracker.files.PathFileParser;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MapFragment.OnFragmentInteractionListener,
@@ -43,6 +44,7 @@ public class MainActivity extends AppCompatActivity
     private FragmentTransaction _transaction;
 
     private int _uploadFileIndex;
+    private String _uploadName, _uploadDescription;
 
     MapFragment mapFragment;
 
@@ -51,8 +53,10 @@ public class MainActivity extends AppCompatActivity
     Intent serviceIntent;
     BluetoothServiceConnection serviceConnection;
     ViewLocationListener locationListener;
+    PathLoadingListener pathLoadingListener;
 
     LocationUpdateReceiver locationUpdateReceiver;
+    PathSentReceiver pathSentReceiver;
 
     public PathDatabase database;
     public static final String LOG_TAG = "PathTracker";
@@ -95,12 +99,6 @@ public class MainActivity extends AppCompatActivity
 
         database = new PathDatabase(this);
         database.open();
-        if (database.isEmptyDatabase()) {
-            for (int i = 0; i < DummyContent.ITEMS.size(); i++) {
-                database.addPath(DummyContent.ITEMS.get(i).name, DummyContent.ITEMS.get(i).description,
-                        DummyContent.ITEMS.get(i).startDate, DummyContent.ITEMS.get(i).filePath);
-            }
-        }
         PathDataContent.getAllPaths(database);
 
         _addFragment = new AddPathFragment();
@@ -116,6 +114,10 @@ public class MainActivity extends AppCompatActivity
         locationUpdateReceiver = new LocationUpdateReceiver();
         IntentFilter filter = new IntentFilter(LocationUpdateReceiver.BROADCAST_ACTION);
         registerReceiver(locationUpdateReceiver, filter);
+
+        pathSentReceiver = new PathSentReceiver();
+        filter = new IntentFilter(PathSentReceiver.BROADCAST_ACTION);
+        registerReceiver(pathSentReceiver, filter);
     }
 
     @Override
@@ -123,6 +125,7 @@ public class MainActivity extends AppCompatActivity
         super.onDestroy();
         connector.unregisterReceivers();
         unregisterReceiver(locationUpdateReceiver);
+        unregisterReceiver(pathSentReceiver);
         stopService(serviceIntent);
     }
 
@@ -200,7 +203,16 @@ public class MainActivity extends AppCompatActivity
         if (code == PathItemFragment.CODE_ITEM_DELETE) {
             int id = database.getPathIdByFilename(item.filePath);
             database.removePath(id);
-            Toast.makeText(this, "deleting item called", Toast.LENGTH_SHORT).show();
+            File file = new File(getFilesDir(), item.filePath);
+            if (file.exists()) {
+                if (file.delete()) {
+                    Toast.makeText(this, "successfully deleted", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "error while deleting", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "empty path removed, fuck yeah", Toast.LENGTH_SHORT).show();
+            }
         } else if (code == PathItemFragment.CODE_ITEM_EDIT) {
             _editTemp = item;
             _transaction = getSupportFragmentManager().beginTransaction();
@@ -229,22 +241,26 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onCreateFragmentInteraction(String name, String description, int result_code, int mode) {
-        _transaction = getSupportFragmentManager().beginTransaction();
         if (result_code == CreatePathFragment.RESULT_OK) {
             if (mode == CreatePathFragment.CALL_FOR_EDIT) {
+                _transaction = getSupportFragmentManager().beginTransaction();
                 int id = database.getPathIdByFilename(_editTemp.filePath);
                 database.updateRowById(id, new PathDataContent.PathRecord(name, _editTemp.startDate, description, _editTemp.filePath));
                 _editTemp = null;
-                _listFragment = null;
                 PathDataContent.getAllPaths(database);
-                _listFragment = new PathItemFragment();
                 _transaction.replace(R.id.main_container, _listFragment);
                 _transaction.commit();
             } else if (mode == CreatePathFragment.CALL_FOR_CREATE) {
-                //here we should upload a file somehow...
+                _uploadName = name;
+                _uploadDescription = description;
+                String filename = UUID.randomUUID().toString() + ".dat";
+                pathLoadingListener = new PathLoadingListener(this, filename);
+                pathLoadingListener.startListening();
+                requestPath();
 
             }
         } else if (result_code == CreatePathFragment.RESULT_CANCEL) {
+            _transaction = getSupportFragmentManager().beginTransaction();
             if (mode == CreatePathFragment.CALL_FOR_EDIT) {
                 _transaction.replace(R.id.main_container, _listFragment);
             } else {
@@ -252,6 +268,29 @@ public class MainActivity extends AppCompatActivity
             }
             _transaction.commit();
         }
+    }
+
+    void requestPath() {
+        byte[] buffer = PathTracker.newBuffer();
+        int msgSize = PathTracker.commandSendPath(buffer, "" + _uploadFileIndex);
+        if (serviceConnection.connected) {
+            serviceConnection.binder.sendMessage(buffer, msgSize);
+        } else {
+            Log.w(LOG_TAG, "No connection with device");
+        }
+    }
+
+    void pathLoaded(Intent intent) {
+        pathLoadingListener.stopListening();
+        String filename = pathLoadingListener.getFilename();
+        String startDate = pathLoadingListener.getStartDate();
+        database.addPath(_uploadName, _uploadDescription, startDate, filename);
+        Toast.makeText(this, intent.getStringExtra(PathLoadingListener.ARG_RESULT_MESSAGE), Toast.LENGTH_SHORT).show();
+        PathDataContent.getAllPaths(database);
+        _transaction = getSupportFragmentManager().beginTransaction();
+        _transaction.replace(R.id.main_container, _listFragment);
+        _transaction.commit();
+        //display smth what is next
     }
 
     @Override
@@ -288,6 +327,8 @@ public class MainActivity extends AppCompatActivity
         _transaction = getSupportFragmentManager().beginTransaction();
         _createFragment = CreatePathFragment.newInstance(null, null, (byte) interact_code);
         _uploadFileIndex = fileIndex;
+        _transaction.replace(R.id.main_container, _createFragment);
+        _transaction.commit();
     }
 
 

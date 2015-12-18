@@ -54,9 +54,10 @@ public class ViewLocationListener implements PathTrackerResultListener {
                 _signalAvailable = false;
             } else {
                 GpsData data = GpsData.fromBytes(tracker.getMessageBytes());
-                double latitude = data.getLatitudeDegrees() + 1.0 / 60.0 * data.getLatitudeMinutes();
+                /*double latitude = data.getLatitudeDegrees() + 1.0 / 60.0 * data.getLatitudeMinutes();
                 double longitude = data.getLongitudeDegrees() + 1.0 / 60.0 * data.getLongitudeMinutes();
-                _currentLocation = new LatLng(latitude, longitude);
+                _currentLocation = new LatLng(latitude, longitude);*/
+                _currentLocation = data.getLatLng();
                 if (_listening && _signalAvailable){
                     Intent broadcastIntent = new Intent(LocationUpdateReceiver.BROADCAST_ACTION);
                     _activity.sendBroadcast(broadcastIntent);

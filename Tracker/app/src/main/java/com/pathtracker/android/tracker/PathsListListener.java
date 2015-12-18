@@ -1,5 +1,7 @@
 package com.pathtracker.android.tracker;
 
+import android.util.Log;
+
 import com.pathtracker.android.bluetooth.PathTracker;
 import com.pathtracker.android.bluetooth.PathTrackerResultListener;
 import com.pathtracker.android.bluetooth.Result;
@@ -34,6 +36,9 @@ public class PathsListListener implements PathTrackerResultListener {
             _container.add(tracker.getMessage());
         }
         else if (tracker.getLastResult() == Result.PathsListSent){
+            _done = true;
+        }
+        else if (tracker.getLastResult() == Result.Error){
             _done = true;
         }
     }

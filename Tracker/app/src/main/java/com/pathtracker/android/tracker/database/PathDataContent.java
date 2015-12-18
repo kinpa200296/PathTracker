@@ -11,8 +11,10 @@ public class PathDataContent {
 
     public static List<PathRecord> getAllPaths(PathDatabase pDB){
         Cursor dataCursor =  pDB.getAllData();
-        dataCursor.moveToFirst();
-        List<PathRecord> tempList = new LinkedList<PathRecord>();
+        records.clear();
+        if (!dataCursor.moveToFirst()) {
+            return records;
+        }
         String pathName = "", pathDescription = "", pathFile = "", pathDate = "14.12.2015";
         do{
             int index = 0;
@@ -24,9 +26,8 @@ public class PathDataContent {
             pathDate = dataCursor.getString(index);
             index = dataCursor.getColumnIndex(DatabaseHelper.COLUMN_PATH_FILE);
             pathFile = dataCursor.getString(index);
-            tempList.add(new PathRecord(pathName, pathDate, pathDescription, pathFile));
+            records.add(new PathRecord(pathName, pathDate, pathDescription, pathFile));
         }while (dataCursor.moveToNext());
-        records = tempList;
         return records;
     }
 

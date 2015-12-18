@@ -54,7 +54,7 @@ public class AddPathFragment extends Fragment {
             //TODO: подать список элементов на обработку
             final AddPathRecyclerViewAdapter adapter = new AddPathRecyclerViewAdapter(mListener.getFiles(), mListener);
             recyclerView.setAdapter(adapter);
-            ItemTouchHelper.SimpleCallback scb = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT|ItemTouchHelper.RIGHT) {
+            ItemTouchHelper.SimpleCallback scb = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
                 @Override
                 public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
                     return false;
@@ -62,7 +62,7 @@ public class AddPathFragment extends Fragment {
 
                 @Override
                 public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-                    if (direction == ItemTouchHelper.RIGHT){
+                    if (direction == ItemTouchHelper.RIGHT) {
                         mListener.onAddPathInteraction(viewHolder.getAdapterPosition(), CODE_FILE_DELETE);
                         adapter.removeItem(viewHolder.getAdapterPosition());
                     }
@@ -74,13 +74,13 @@ public class AddPathFragment extends Fragment {
                     View itemView = viewHolder.itemView;
                     Paint paint = new Paint();
                     paint.setColor(Color.RED);
-                    if (dX >0)
-                        c.drawRect(itemView.getLeft(), itemView.getTop(), itemView.getRight(), itemView.getBottom(),paint);
+                    if (dX > 0)
+                        c.drawRect(itemView.getLeft(), itemView.getTop(), itemView.getRight(), itemView.getBottom(), paint);
                     Drawable d = ContextCompat.getDrawable(getActivity(), R.drawable.ic_menu_remove);
                     //if (dX < 0)
-                        //d.setBounds(itemView.getLeft(), itemView.getTop(), 0 , itemView.getBottom());
+                    //d.setBounds(itemView.getLeft(), itemView.getTop(), 0 , itemView.getBottom());
                     //else
-                        d.setBounds(itemView.getLeft(), itemView.getTop(), 180, itemView.getBottom());
+                    d.setBounds(itemView.getLeft(), itemView.getTop(), itemView.getBottom() - itemView.getTop(), itemView.getBottom());
                     d.draw(c);
                     super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
                 }
@@ -114,6 +114,7 @@ public class AddPathFragment extends Fragment {
 
     public interface OnAddPathInteractionListener {
         void onAddPathInteraction(int fileIndex, int interact_code);
+
         List<String> getFiles();
     }
 }

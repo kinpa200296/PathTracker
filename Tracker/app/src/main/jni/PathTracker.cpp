@@ -9,9 +9,8 @@ JNIEXPORT jint JNICALL
     data[msgLen++] = COMMAND_LIST_PATHS;
     data[msgLen++] = 0;
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
@@ -30,9 +29,8 @@ JNIEXPORT jint JNICALL
     }
     env->ReleaseStringUTFChars(idStr, str);
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
@@ -51,9 +49,8 @@ JNIEXPORT jint JNICALL
     }
     env->ReleaseStringUTFChars(idStr, str);
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
@@ -72,9 +69,8 @@ JNIEXPORT jint JNICALL
     }
     env->ReleaseStringUTFChars(name, str);
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
@@ -87,9 +83,8 @@ JNIEXPORT jint JNICALL
     data[msgLen++] = COMMAND_ENABLE_BROADCAST;
     data[msgLen++] = 0;
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
@@ -102,9 +97,8 @@ JNIEXPORT jint JNICALL
     data[msgLen++] = COMMAND_DISABLE_BROADCAST;
     data[msgLen++] = 0;
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
@@ -117,9 +111,8 @@ JNIEXPORT jint JNICALL
     data[msgLen++] = COMMAND_PAUSE_PATH;
     data[msgLen++] = 0;
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
@@ -132,9 +125,8 @@ JNIEXPORT jint JNICALL
     data[msgLen++] = COMMAND_RESUME_PATH;
     data[msgLen++] = 0;
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
@@ -147,9 +139,8 @@ JNIEXPORT jint JNICALL
     data[msgLen++] = COMMAND_STOP_PATH;
     data[msgLen++] = 0;
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
@@ -162,9 +153,8 @@ Java_com_pathtracker_android_bluetooth_PathTracker_commandGetState(JNIEnv *env, 
     data[msgLen++] = COMMAND_GET_STATE;
     data[msgLen++] = 0;
 
-    env->ReleaseByteArrayElements(bytes, data, 0);
-
     data[1] = (jbyte) (msgLen - 2);
+    env->ReleaseByteArrayElements(bytes, data, 0);
     return msgLen;
 }
 
