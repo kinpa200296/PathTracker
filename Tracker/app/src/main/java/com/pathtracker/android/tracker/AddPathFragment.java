@@ -21,15 +21,11 @@ import java.util.List;
 
 public class AddPathFragment extends Fragment {
 
-    public final static int CODE_FILE_DELETE = 3;
-    public final static int CODE_FILE_ADD = 1;
-
-    public static int VIEW_MODE_FILE_LIST = 2;
+    public final static int CODE_FILE_DELETE = 1;
+    public final static int CODE_FILE_ADD = 3;
 
     private static final String ARG_MODE = "mode";
     private OnAddPathInteractionListener mListener;
-
-    List<String> files;
 
     public AddPathFragment() {
     }
@@ -49,12 +45,7 @@ public class AddPathFragment extends Fragment {
         //TODO:определить xml файлы для списка
         Bundle args = getArguments();
         final View view;
-        if (args.getInt(ARG_MODE) == VIEW_MODE_FILE_LIST){
-            view = inflater.inflate(R.layout.fragment_path_item_list, container, false);
-        }
-        else {
-            view = inflater.inflate(R.layout.fragment_no_device_connection_found, container, false);
-        }
+        view = inflater.inflate(R.layout.fragment_path_item_list, container, false);
         // Set the adapter
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
@@ -86,9 +77,9 @@ public class AddPathFragment extends Fragment {
                     if (dX >0)
                         c.drawRect(itemView.getLeft(), itemView.getTop(), itemView.getRight(), itemView.getBottom(),paint);
                     Drawable d = ContextCompat.getDrawable(getActivity(), R.drawable.ic_menu_remove);
-                    if (dX < 0)
-                        d.setBounds(itemView.getLeft(), itemView.getTop(), 0 , itemView.getBottom());
-                    else
+                    //if (dX < 0)
+                        //d.setBounds(itemView.getLeft(), itemView.getTop(), 0 , itemView.getBottom());
+                    //else
                         d.setBounds(itemView.getLeft(), itemView.getTop(), 180, itemView.getBottom());
                     d.draw(c);
                     super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);

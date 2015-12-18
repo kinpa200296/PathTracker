@@ -26,6 +26,7 @@ import com.pathtracker.android.tracker.database.PathDatabase;
 import com.pathtracker.android.tracker.dummy.DummyContent;
 import com.pathtracker.android.tracker.files.PathFileParser;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,6 +41,8 @@ public class MainActivity extends AppCompatActivity
     private SettingsFragment _settingsFragment;
     private PathDataContent.PathRecord _editTemp;
     private FragmentTransaction _transaction;
+
+    private int _uploadFileIndex;
 
     MapFragment mapFragment;
 
@@ -152,7 +155,11 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         _transaction = getSupportFragmentManager().beginTransaction();
         if (id == R.id.nav_add_path) {
-            _transaction.replace(R.id.main_container, _addFragment);
+            if (serviceConnection.binder.isConnectedToDevice()) {
+                _transaction.replace(R.id.main_container, _addFragment);
+            } else {
+                _transaction.replace(R.id.main_container, _noConnetionFragment);
+            }
         } else if (id == R.id.nav_path_list) {
             _transaction.replace(R.id.main_container, _listFragment);
         } else if (id == R.id.nav_all_path_map) {
@@ -163,11 +170,6 @@ public class MainActivity extends AppCompatActivity
             if (serviceConnection.binder.isConnectedToDevice()) {
                 locationListener.startListening();
                 enableBroadcast();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 if (locationListener.getCurrentLocation() != null) {
                     LinkedList<LatLng> list = new LinkedList<>();
                     list.add(locationListener.getCurrentLocation());
@@ -226,19 +228,28 @@ public class MainActivity extends AppCompatActivity
 
 
     @Override
-    public void onCreateFragmentInteraction(String name, String description, int result_code) {
+    public void onCreateFragmentInteraction(String name, String description, int result_code, int mode) {
         _transaction = getSupportFragmentManager().beginTransaction();
         if (result_code == CreatePathFragment.RESULT_OK) {
-            int id = database.getPathIdByFilename(_editTemp.filePath);
-            database.updateRowById(id, new PathDataContent.PathRecord(name, _editTemp.startDate, description, _editTemp.filePath));
-            _editTemp = null;
-            _listFragment = null;
-            PathDataContent.getAllPaths(database);
-            _listFragment = new PathItemFragment();
-            _transaction.replace(R.id.main_container, _listFragment);
-            _transaction.commit();
+            if (mode == CreatePathFragment.CALL_FOR_EDIT) {
+                int id = database.getPathIdByFilename(_editTemp.filePath);
+                database.updateRowById(id, new PathDataContent.PathRecord(name, _editTemp.startDate, description, _editTemp.filePath));
+                _editTemp = null;
+                _listFragment = null;
+                PathDataContent.getAllPaths(database);
+                _listFragment = new PathItemFragment();
+                _transaction.replace(R.id.main_container, _listFragment);
+                _transaction.commit();
+            } else if (mode == CreatePathFragment.CALL_FOR_CREATE) {
+                //here we should upload a file somehow...
+
+            }
         } else if (result_code == CreatePathFragment.RESULT_CANCEL) {
-            _transaction.replace(R.id.main_container, _listFragment);
+            if (mode == CreatePathFragment.CALL_FOR_EDIT) {
+                _transaction.replace(R.id.main_container, _listFragment);
+            } else {
+                _transaction.replace(R.id.main_container, _addFragment);
+            }
             _transaction.commit();
         }
     }
@@ -275,7 +286,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onAddPathInteraction(int fileIndex, int interact_code) {
         _transaction = getSupportFragmentManager().beginTransaction();
-        //createpathfragment is called here and interaction continues
+        _createFragment = CreatePathFragment.newInstance(null, null, (byte) interact_code);
+        _uploadFileIndex = fileIndex;
     }
 
 
@@ -305,10 +317,25 @@ public class MainActivity extends AppCompatActivity
         locationListener.stopListening();
     }
 
+    public void requestPathsList() {
+        byte[] buffer = PathTracker.newBuffer();
+        int msgSize = PathTracker.commandListPath(buffer);
+        if (serviceConnection.connected) {
+            serviceConnection.binder.sendMessage(buffer, msgSize);
+        } else {
+            Log.w(LOG_TAG, "No connection with device");
+        }
+    }
+
     @Override
     public List<String> getFiles() {
-        //here we should take files' name strings from the device
-        return null;
+        ArrayList<String> paths = new ArrayList<>();
+        PathsListListener pathsListListener = new PathsListListener(paths);
+        pathsListListener.startListening(tracker);
+        requestPathsList();
+        for (; !pathsListListener.isDone(); ) ;
+        pathsListListener.stopListening(tracker);
+        return paths;
     }
 
     @Override

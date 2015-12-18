@@ -160,14 +160,16 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     }
 
     public void DrawLocation(LatLng location) {
-        if (location != null) {
-            _notConnected = false;
+        if (location != null && mMap != null) {
             if (mMap.getCameraPosition() != null) {
                 _locationZoom = mMap.getCameraPosition().zoom;
             }
             mMap.clear();
             mMap.addMarker(new MarkerOptions().position(location).title("Your estimated location"));
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, _locationZoom));
+            if (_notConnected) {
+                _notConnected = false;
+            }
         } else if (!_notConnected) {
             Toast.makeText(getActivity(), "Can't find your location yet! Seems like a bad signal...", Toast.LENGTH_LONG).show();
             _notConnected = true;

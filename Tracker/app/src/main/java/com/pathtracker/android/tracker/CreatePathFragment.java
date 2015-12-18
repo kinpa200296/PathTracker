@@ -52,10 +52,15 @@ public class CreatePathFragment extends Fragment implements View.OnClickListener
         etName = (EditText) v.findViewById(R.id.edit_name_create);
         etDescription = (EditText) v.findViewById(R.id.edit_desc_create);
 
-        etName.setText(bundle.getString(BUNDLE_KEY_NAME));
-        etDescription.setText(bundle.getString(BUNDLE_KEY_DESC));
         calling_method = bundle.getByte(BUNDLE_KEY_MODE);
-
+        if (calling_method == CALL_FOR_EDIT) {
+            etName.setText(bundle.getString(BUNDLE_KEY_NAME));
+            etDescription.setText(bundle.getString(BUNDLE_KEY_DESC));
+        }
+        else{
+            etName.setText("");
+            etDescription.setText("");
+        }
         Button button = (Button) v.findViewById(R.id.btnOk_create);
         button.setOnClickListener(this);
         button = (Button) v.findViewById(R.id.btnCancel_create);
@@ -88,15 +93,15 @@ public class CreatePathFragment extends Fragment implements View.OnClickListener
                 if (name.equals("") || name.length() > 50) return;
                 String description = etDescription.getText().toString();
                 if (description.length() > 500) return;
-                mListener.onCreateFragmentInteraction(name, description, RESULT_OK);
+                mListener.onCreateFragmentInteraction(name, description, RESULT_OK, calling_method);
                 return;
             case R.id.btnCancel_create:
-                mListener.onCreateFragmentInteraction(null, null, RESULT_CANCEL);
+                mListener.onCreateFragmentInteraction(null, null, RESULT_CANCEL, calling_method);
         }
         return;
     }
 
     public interface OnFragmentInteractionListener {
-        void onCreateFragmentInteraction(String name, String description, int result_code);
+        void onCreateFragmentInteraction(String name, String description, int result_code, int mode);
     }
 }
