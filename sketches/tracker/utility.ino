@@ -19,6 +19,8 @@ String getString(File f){
   return res;
 }
 
+// generates filename for given counter
+// which grants unique filename for unique counter
 String generateFileName(unsigned long cnt){
   String res = "path0000.dat";
   for (int i = 8; i > 0 && cnt > 0; i--, cnt /= 10){

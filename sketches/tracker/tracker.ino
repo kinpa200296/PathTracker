@@ -3,7 +3,7 @@
 #include <SD.h>
 
 #include <PathTracker.h>
-
+// Pins for connecting gps
 int gpsRX = 2;
 int gpsTX = 3;
 
@@ -14,14 +14,22 @@ int sdCSPin = 10;
 // SCK - pin 13
 
 bool sdCardPresent = false;
+// file into which current path is recorded
 File dataFile;
 char *pathsFileName = "paths.dat", *counterFileName = "counter.dat";
 
+// c++ class from PathTracker library that parses gps data
 GpsParser parser(100);
+// c++ class from PathTracker library that holds current state of device
+// and parses incoming commands from Serial(whether it is commands from USB or Bluetooth)
 PathTracker tracker;
 
+// counter used for generating unique filenames
+// prevWriteTime used together with WRITE_DELAY from c++ lib
+// to make dataFile flush after parsing GPS data
 unsigned long prevWriteTime, counter;
 
+// used to communicate over UART with GPS reciever 
 SoftwareSerial gpsSerial(gpsRX, gpsTX);
 
 void setup() {
@@ -29,16 +37,20 @@ void setup() {
   gpsSerial.begin(9600);
   sdCardPresent = SD.begin(sdCSPin);
   if (sdCardPresent){
-    //Serial.println("card present");
+    
+    // trying to find if counter already has a saved value
     if (SD.exists(counterFileName)){
       File counterFile = SD.open(counterFileName, FILE_READ);
       counter = getULong(counterFile);
       counterFile.close();
     }
     else{
+      // if not set 0 and save
       counter = 0;
       saveCounter();
     }
+    // checking if file describing paths exists
+    // if not we will make one
     if (!SD.exists(pathsFileName)){
       File pathsFile = SD.open(pathsFileName, FILE_WRITE);
       pathsFile.close();
@@ -50,22 +62,27 @@ void setup() {
 void loop() {
   
   if (gpsSerial.available() > 0){
+    // if anything came from GPS read it first
     checkGpsSerial();
   }
   else if(Serial.available() > 0){
+    // if any input via USB or Bluetooth read it
     readCommand();
   }
   else{
     if (parser.isReady()){
+      // GPS sent enough data to start parcing
       processSentence();
     }
     if (sdCardPresent && prevWriteTime + WRITE_DELAY < millis()){
+      // flush dataFile if it is time
       dataFile.flush();
       prevWriteTime += 10*WRITE_DELAY;
     }
   }
 }
 
+// used to keep counter value between shut downs
 void saveCounter(){
   if (sdCardPresent){
     File counterFile = SD.open(counterFileName, FILE_WRITE);
@@ -75,13 +92,17 @@ void saveCounter(){
   }
 }
 
+// called when GpsParser gathered enough data from GPS module
 void processSentence(){
+  // parsing string of GPS data
   DataParser *dataParser = new DataParser(parser.getBufferedData());
+  // getting GPS data in numeric form
   GpsData *data = dataParser->getData();
   delete dataParser;
   byte *bytes = data->toBytes();
   
   if (data->isActive()){
+    // if enough sattelites are caught
     if (tracker.broadcastEnabled()){
       response(RESULT_BROADCAST, "Active");
       response(RESULT_BROADCAST, bytes, GPS_DATA_SIZE);
@@ -93,16 +114,21 @@ void processSentence(){
     }
   }
   else{
+    // if enough sattelites are caught
     if (tracker.broadcastEnabled()){
       response(RESULT_BROADCAST, "Void");
     }
   }
 
+  // free memory to prevent leaks
   free(bytes);
   delete data;
+
+  // reseting internal buffer
   parser.reset();
 }
 
+// read all available data from GPS module
 void checkGpsSerial(){  
   while (gpsSerial.available() > 0){
     char ch = (char)gpsSerial.read();
@@ -110,15 +136,18 @@ void checkGpsSerial(){
   }
 }
 
+// analyzes message coming from Bluetooth or USB
 void readCommand(){
   while(Serial.available() > 0){
     byte b = (byte)Serial.read();
     if (tracker.analyze(b)){
+      // if message finished we should process it
       processCommand();
     }
   }
 }
 
+// send response to message via Bluetooth or USB
 void response(byte result, const char* msg){
   byte msgSize = strlen(msg);
   Serial.write(result);
@@ -132,6 +161,7 @@ void response(byte result, const byte* msg, byte msgSize){
   Serial.write(msg, msgSize);
 }
 
+// do requested action
 void processCommand(){
   switch(tracker.getCommand()){
     case COMMAND_LIST_PATHS:
@@ -196,11 +226,13 @@ void processCommand(){
   tracker.resetCommand();
 }
 
+// sends current PathTracker state
 void sendState(){
   byte state = tracker.getState();
   response(RESULT_STATE, &state, 1);
 }
 
+// sends paths list via Bluetooth or USB
 void listPaths(){
   bool broadcastState = tracker.broadcastEnabled();
   if (broadcastState){
@@ -230,30 +262,34 @@ void listPaths(){
   }
 }
 
+// starts recording new path
 void newPath(bool buttonPressed){
   if (sdCardPresent){
     counter++;
     saveCounter();
     
     String fileName = generateFileName(counter);
-    
+    // put a record about new path
     File pathsFile = SD.open(pathsFileName, FILE_WRITE);
-    if (!buttonPressed){
+    if (strlen(tracker.getString(0)) != 0){
       pathsFile.println(tracker.getString(0));
     }
     else{
+      // give tag = filename if tag from command message is empty
       pathsFile.println(fileName);
     }
     pathsFile.println(fileName);
     pathsFile.close();
+    // stop existing path recording if any
     tracker.stop();
     if (dataFile){
       dataFile.close();
     }
+    // start recording a new path
     dataFile = SD.open(fileName.c_str(), FILE_WRITE);
     if (dataFile){
-    response(RESULT_PATH_ADDED, tracker.getString(0));
-    tracker.resume();
+      response(RESULT_PATH_ADDED, tracker.getString(0));
+      tracker.resume();
     }
     else{
       response(RESULT_ERROR, "NoFileCreated");
@@ -264,6 +300,7 @@ void newPath(bool buttonPressed){
   }
 }
 
+// move file cursor to path with specified id
 void seekPath(File f, unsigned long pathId){
   String s;
   for (int i = 0; f.peek() != -1 && i < pathId; i++){
@@ -272,21 +309,26 @@ void seekPath(File f, unsigned long pathId){
   }
 }
 
+// send requsted path
 void sendPath(){
   bool broadcastState = tracker.broadcastEnabled();
   if (broadcastState){
+    // just in case normally should be useless
     tracker.disableBroadcast();
   }
   if (sdCardPresent){
+    // find path fileName
     File pathsFile = SD.open(pathsFileName, FILE_READ);
     seekPath(pathsFile, tracker.getULong(0));
     String pathName = getString(pathsFile);
     String pathFileName = getString(pathsFile);
     pathsFile.close();
+    // try opening file found in records
     File pathFile;
     if (pathFileName != ""){
       pathFile = SD.open(pathFileName, FILE_READ);
     }
+    // send data if found
     if (pathFile){
       byte data[GPS_DATA_SIZE];
       while (pathFile.peek() != -1){
@@ -310,6 +352,7 @@ void sendPath(){
   }
 }
 
+// deletes specified path
 void deletePath(){
   bool broadcastState = tracker.broadcastEnabled();
   if (broadcastState){
@@ -317,13 +360,16 @@ void deletePath(){
   }
   if (sdCardPresent){
     File pathsFile = SD.open(pathsFileName, FILE_READ);
+    // save into temp file
     File tempFile = SD.open("temp.dat", FILE_WRITE);
     while(pathsFile.peek() != -1){
       tempFile.println(getString(pathsFile));
     }
     pathsFile.close();
     tempFile.close();
+    // delete records
     SD.remove(pathsFileName);
+    // restore records from temp file skipping specified record
     pathsFile = SD.open(pathsFileName, FILE_WRITE);
     tempFile = SD.open("temp.dat", FILE_READ);
     unsigned long pathId = tracker.getULong(0);
